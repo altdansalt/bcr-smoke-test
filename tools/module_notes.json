@@ -1,0 +1,10 @@
+{
+  "aspect_tools_telemetry": "pulled in by the Aspect rulesets; telemetry disabled via `--repo_env=DO_NOT_TRACK=1`",
+  "rules_proto_grpc": "left out: its dependents are almost entirely its own per-language plugin modules",
+  "rules_android": "left out: needs a locally installed Android SDK (`ANDROID_HOME`), not hermetic",
+  "libx11": "left out: X11 client library, only meaningful with a display server",
+  "glib": "left out: large GNOME base library, rarely a build-system concern",
+  "rules_gazebo": "left out: Gazebo-specific",
+  "rules_autoconf": "exercised transitively via `rules_cc_autoconf`",
+  "toolchain_utils": "1.3.2 is broken in the BCR (references a missing package); pinned to 1.3.0"
+}
