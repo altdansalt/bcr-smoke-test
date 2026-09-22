@@ -1,5 +1,6 @@
 # One small gtest per popular C/C++ library module in the BCR. Each test calls
 # into the library so the whole thing has to compile and link.
+load("@cmake_configure_file//:cmake_configure_file.bzl", "cmake_configure_file")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
@@ -28,6 +29,12 @@ package(default_visibility = ["//visibility:public"])
         "openssl": ["@openssl//:crypto"],
         "curl": ["@curl"],
         "boringssl": ["@boringssl//:crypto", "@boringssl//:ssl"],
+        "eigen": ["@eigen"],
+        "fmt": ["@fmt"],
+        "gflags": ["@gflags"],
+        "tinyxml2": ["@tinyxml2"],
+        "libpng": ["@libpng//:png"],
+        "freetype": ["@freetype"],
         "abseil": [
             "@abseil-cpp//absl/strings",
             "@abseil-cpp//absl/strings:str_format",
@@ -57,4 +64,28 @@ cc_binary(
         "@zlib",
         "@zstd",
     ],
+)
+
+# cmake_configure_file: CMake's configure_file() semantics in Bazel (used by
+# many ported C++ libraries to generate config.h).
+cmake_configure_file(
+    name = "config_h",
+    src = "config.h.in",
+    out = "config.h",
+    defines = [
+        "SMOKE_VERSION_MAJOR=1",
+        "SMOKE_VERSION_MINOR=2",
+        "HAVE_ZLIB",
+    ],
+    undefines = ["HAVE_NOTHING"],
+)
+
+cc_test(
+    name = "config_h_test",
+    size = "small",
+    srcs = [
+        "config.h",
+        "config_h_test.cc",
+    ],
+    deps = ["@googletest//:gtest_main"],
 )
