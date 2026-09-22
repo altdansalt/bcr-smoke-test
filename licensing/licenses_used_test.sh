@@ -4,5 +4,5 @@ set -euo pipefail
 json="$1"
 grep -q '"license_kinds"' "$json" || { echo "no license_kinds in $json"; cat "$json"; exit 1; }
 grep -q 'Apache-2.0' "$json" || { echo "Apache-2.0 not found in $json"; cat "$json"; exit 1; }
-grep -q '//license:license' "$json" || { echo "//license:license not found in $json"; cat "$json"; exit 1; }
+grep -q '//licensing:license' "$json" || { echo "//licensing:license not found in $json"; cat "$json"; exit 1; }
 echo PASS
