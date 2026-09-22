@@ -1,10 +1,9 @@
 # bcr-smoke-test — progress
 
 ## What's happening right now
-Baseline works: `rules_cc` + 17 C/C++ library modules build and 18 tests pass on Bazel 9.2.0.
-Parallel agents are now writing one package per language/ruleset family in separate clones
-(jvm, python, go, rust, js, proto/grpc, starlark tooling, contrib tooling, native/pkg/perl).
-Once they report back I merge, run `bazel build //...` and `bazel test //...`, then codex review.
+Merged so far: cc, apple, rust, js, python, go — 40 test targets, all green on Linux (2 macOS-only skipped).
+Still being written by parallel agents: jvm, proto/grpc, starlark tooling, contrib tooling, native (foreign_cc/pkg/perl/fuzzing).
+Then: full `bazel build //...` + `bazel test //...`, codex review, publish the public repo.
 
 ## Plan
 1. ~~MODULE.bazel with all top modules at their latest BCR versions; make `bazel mod deps` resolve.~~
