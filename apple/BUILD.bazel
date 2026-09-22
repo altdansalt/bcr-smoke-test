@@ -42,6 +42,15 @@ objc_library(
     target_compatible_with = MACOS_ONLY,
 )
 
+# Objective-C entry point for the command-line application below (a swift_binary is a
+# finished executable and contributes no `main` when listed in deps).
+objc_library(
+    name = "hello_objc_main",
+    srcs = ["main.m"],
+    target_compatible_with = MACOS_ONLY,
+    deps = [":objc_greeter"],
+)
+
 # rules_apple bundling rules require a macOS *execution* platform, which makes
 # toolchain resolution fail on Linux before target_compatible_with is checked.
 # So this target is `manual` and only reached through the macOS-only build_test.
@@ -51,7 +60,7 @@ macos_command_line_application(
     minimum_os_version = "13.0",
     tags = ["manual"],
     target_compatible_with = MACOS_ONLY,
-    deps = [":hello_swift"],
+    deps = [":hello_objc_main"],
 )
 
 build_test(
