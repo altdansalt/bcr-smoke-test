@@ -55,11 +55,11 @@ macos_command_line_application(
 
 build_test(
     name = "apple_build_test",
+    target_compatible_with = MACOS_ONLY,
     targets = [
         ":greeter",
         ":hello_swift",
         ":objc_greeter",
         ":hello_macos",
     ],
-    target_compatible_with = MACOS_ONLY,
 )

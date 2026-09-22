@@ -2,7 +2,11 @@
 
 Ranking source: direct dependents in the BCR (boost excluded), snapshot 2026-09-18.
 """
-module(name = "bcr_smoke_test", version = "0.1.0")
+
+module(
+    name = "bcr_smoke_test",
+    version = "0.1.0",
+)
 
 # --- rulesets / toolchains (ordered by direct dependents) ---
 bazel_dep(name = "rules_cc", version = "0.2.25")
