@@ -1,8 +1,9 @@
 # bcr-smoke-test — progress
 
 ## What's happening right now
-Merged so far: cc, apple, rust, js, python, go — 40 test targets, all green on Linux (2 macOS-only skipped).
-Still being written by parallel agents: jvm, proto/grpc, starlark tooling, contrib tooling, native (foreign_cc/pkg/perl/fuzzing).
+Merged: cc, apple, rust, js, python, go, starlark tooling, native, jvm, contrib — 110 test targets, 107 green on Linux (3 macOS-only skipped).
+Found and worked around a Bazel 9.x Skymeld symlink-forest race that breaks fully-cached runs (docs/bazel-skymeld-symlink-race.md).
+Still outstanding: proto/grpc family (its agent is finishing the heavy grpc C++ build).
 Then: full `bazel build //...` + `bazel test //...`, codex review, publish the public repo.
 
 ## Plan

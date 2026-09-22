@@ -13,3 +13,8 @@ common --repo_env=DO_NOT_TRACK=1
 build:source_protoc --@protobuf//bazel/flags:prefer_prebuilt_protoc=false
 # Hermetic JDK for java_binary/java_test/kt_jvm_* (Bazel defaults to a host JDK).
 build --java_runtime_version=remotejdk_21
+
+# Work around a Bazel 9.x Skymeld race (execroot/external symlink forest is wiped by the eager
+# planting step while lazily-planted external-repo links are being created) that reliably breaks
+# fully-cached `bazel test //...` runs of this repo. See docs/bazel-skymeld-symlink-race.md.
+common --noexperimental_merged_skyframe_analysis_execution
