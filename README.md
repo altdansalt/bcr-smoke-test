@@ -71,11 +71,11 @@ say exactly which rules are built and which tests execute.
 |--:|---|--:|---|---|---|
 | 1 | `rules_cc` | 769 | 0.2.25 | `apple/`, `cc/`, `cc_autoconf/`, `foreign_cc/`, `fuzzing/`, `proto/` |  |
 | 2 | `platforms` | 606 | 1.1.0 | `apple/`, `cc/`, `platforms/`, `skylib/` |  |
-| 3 | `bazel_skylib` | 561 | 1.9.2 | `apple/`, `contrib/`, `js/`, `license/`, `pkg/`, `platforms/`, `skylib/`, `stardoc/` |  |
-| 4 | `rules_license` | 184 | 1.0.0 | `license/` |  |
+| 3 | `bazel_skylib` | 561 | 1.9.2 | `apple/`, `contrib/`, `js/`, `licensing/`, `pkg/`, `platforms/`, `skylib/`, `stardoc/` |  |
+| 4 | `rules_license` | 184 | 1.0.0 | `licensing/` |  |
 | 5 | `rules_python` | 155 | 2.3.3 | `python/` |  |
 | 6 | `protobuf` | 129 | 36.2 | `go/`, `jvm/`, `proto/`, `python/` |  |
-| 7 | `rules_shell` | 121 | 0.8.0 | `cc/`, `contrib/`, `license/`, `perl/`, `pkg/`, `rust/`, `shell/` |  |
+| 7 | `rules_shell` | 121 | 0.8.0 | `cc/`, `contrib/`, `licensing/`, `perl/`, `pkg/`, `rust/`, `shell/` |  |
 | 8 | `rules_go` | 93 | 0.63.0 | `go/` |  |
 | 9 | `zlib` | 86 | 1.3.2 | `cc/` |  |
 | 10 | `googletest` | 77 | 1.18.0.bcr.1 | `cc/`, `fuzzing/`, `proto/` |  |
@@ -85,7 +85,7 @@ say exactly which rules are built and which tests execute.
 | 14 | `bazel_lib` | 65 | 3.7.2 | `contrib/` |  |
 | 15 | `rules_proto` | 62 | 7.1.0 | `proto/` |  |
 | 16 | `abseil-cpp` | 57 | 20260817.0 | `cc/` |  |
-| 17 | `package_metadata` | 49 | 0.0.13 | `license/` |  |
+| 17 | `package_metadata` | 49 | 0.0.13 | `licensing/` |  |
 | 18 | `apple_support` | 48 | 2.8.4 |  |  |
 | 19 | `rules_cc_autoconf` | 45 | 0.24.0 | `cc_autoconf/` |  |
 | 20 | `aspect_bazel_lib` | 44 | 2.22.5 | `contrib/` |  |
@@ -146,7 +146,7 @@ attributing any code adapted from the rulesets' own examples.
 | `go/` | rules_go (incl. cgo), gazelle, go_proto_library |
 | `rust/` | rules_rust (hermetic toolchain, crate_universe) |
 | `js/` | aspect_rules_js, rules_nodejs, aspect_rules_ts |
-| `shell/`, `skylib/`, `platforms/`, `license/`, `stardoc/`, `buildifier/` | rules_shell, bazel_skylib, bazel_features, platforms, rules_license, package_metadata, stardoc, buildifier_prebuilt |
+| `shell/`, `skylib/`, `platforms/`, `licensing/`, `stardoc/`, `buildifier/` | rules_shell, bazel_skylib, bazel_features, platforms, rules_license, package_metadata, stardoc, buildifier_prebuilt |
 | `contrib/` | aspect_bazel_lib, bazel_lib, tar.bzl, jq.bzl, yq.bzl, toml.bzl, rules_multitool, ape, toolchain_utils, download_utils, gawk, m4 |
 | `foreign_cc/`, `pkg/`, `perl/`, `fuzzing/`, `cc_autoconf/` | rules_foreign_cc, rules_pkg, rules_perl, rules_fuzzing, rules_cc_autoconf |
 | `apple/` | apple_support, rules_swift, rules_apple (macOS hosts only; skipped elsewhere) |
@@ -242,7 +242,7 @@ that nothing in the build depends on outputs being materialized locally.
 - **rules_foreign_cc** 0.16 registers prebuilt cmake and ninja itself, but GNU make is built from
   source via the BCR `make` module (a few thousand actions on first build).
 - **rules_license** 1.0.0: `write_licenses_info` crashes at analysis time if any transitive dep has
-  no license metadata, so the report target here only covers the `license/` package.
+  no license metadata, so the report target here only covers the `licensing/` package.
 - **rules_apple** bundling rules need a macOS execution platform and fail toolchain resolution on
   Linux *before* `target_compatible_with` is checked; they are `manual` and reached via a
   macOS-only `build_test`.
@@ -252,7 +252,7 @@ that nothing in the build depends on outputs being materialized locally.
 - **toolchains_protoc** is obsolete: protobuf ≥ 33.4 has `--@protobuf//bazel/flags:prefer_prebuilt_protoc`
   (default on). `--config=source_protoc` here turns it off.
 - **Bazel 9.x Skymeld**: a main repo with case-clashing top-level names (here `LICENSE` and
-  `license/`) makes lazily planted `execroot/_main/external/*` symlinks fail with ENOENT, so
+  `licensing/`) makes lazily planted `execroot/_main/external/*` symlinks fail with ENOENT, so
   `bazel test //...` fails on `external/...` paths.
   `.bazelrc` disables Skymeld (`--noexperimental_merged_skyframe_analysis_execution`); analysis in
   `docs/bazel-skymeld-symlink-race.md`, fix + failing tests on a fork branch: <https://github.com/altdansalt/bazel/tree/skymeld-external-dir-not-created-with-case-clash>.

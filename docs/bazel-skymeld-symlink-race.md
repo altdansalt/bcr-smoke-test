@@ -1,7 +1,9 @@
 # Bazel 9.x Skymeld: `execroot/_main/external/` never created when the main repo has case-clashing top-level names
 
 Found while building this repo (2026-09-22). Reproduced on Bazel 9.1.0, 9.2.0 and 9.3.0rc2 on Linux x86_64.
-Worked around in `.bazelrc` with `common --noexperimental_merged_skyframe_analysis_execution`.
+It was worked around with `common --noexperimental_merged_skyframe_analysis_execution`; the repo has
+since renamed `license/` to `licensing/` (the clash also breaks `git checkout` on case-insensitive
+filesystems), so the trigger is gone. To reproduce, `git mv licensing license` and fix up the labels.
 
 ## Symptom
 
