@@ -5,7 +5,7 @@ builds and tests the **most common configurations of the most popular rulesets a
 toolchains in the [Bazel Central Registry](https://registry.bazel.build/)**.
 
 ```sh
-git clone https://github.com/<org>/bcr-smoke-test
+git clone https://github.com/altdansalt/bcr-smoke-test
 cd bcr-smoke-test
 bazel build //...
 bazel test //...
