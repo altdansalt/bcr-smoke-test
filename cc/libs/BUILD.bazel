@@ -1,0 +1,60 @@
+# One small gtest per popular C/C++ library module in the BCR. Each test calls
+# into the library so the whole thing has to compile and link.
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+package(default_visibility = ["//visibility:public"])
+
+[
+    cc_test(
+        name = name + "_test",
+        size = "small",
+        srcs = [name + "_test.cc"],
+        deps = deps + ["@googletest//:gtest_main"],
+    )
+    for name, deps in {
+        "zlib": ["@zlib"],
+        "zstd": ["@zstd"],
+        "re2": ["@re2"],
+        "lz4": ["@lz4", "@lz4//:lz4_frame"],
+        "bzip2": ["@bzip2//:bz2"],
+        "xz": ["@xz//:lzma"],
+        "nlohmann_json": ["@nlohmann_json//:json"],
+        "rapidjson": ["@rapidjson"],
+        "brotli": ["@brotli//:brotlienc", "@brotli//:brotlidec"],
+        "snappy": ["@snappy"],
+        "mbedtls": ["@mbedtls"],
+        "c_ares": ["@c-ares//:ares"],
+        "openssl": ["@openssl//:crypto"],
+        "curl": ["@curl"],
+        "boringssl": ["@boringssl//:crypto", "@boringssl//:ssl"],
+        "abseil": [
+            "@abseil-cpp//absl/strings",
+            "@abseil-cpp//absl/strings:str_format",
+            "@abseil-cpp//absl/container:flat_hash_map",
+            "@abseil-cpp//absl/status:statusor",
+            "@abseil-cpp//absl/time",
+        ],
+    }.items()
+]
+
+# google_benchmark: build a benchmark binary and run it (briefly) as a test.
+cc_test(
+    name = "benchmark_test",
+    size = "small",
+    srcs = ["benchmark_test.cc"],
+    args = ["--benchmark_min_time=0.01s"],
+    deps = ["@google_benchmark//:benchmark_main"],
+)
+
+# abseil flags + a real binary using several libs at once.
+cc_binary(
+    name = "compress_tool",
+    srcs = ["compress_tool.cc"],
+    deps = [
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/flags:parse",
+        "@zlib",
+        "@zstd",
+    ],
+)

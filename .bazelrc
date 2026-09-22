@@ -1,0 +1,10 @@
+# Keep the workspace hermetic-ish and quiet.
+common --enable_bzlmod
+common --noenable_workspace
+build --incompatible_strict_action_env
+test --test_output=errors
+build --show_progress_rate_limit=5
+# Skip targets that are incompatible with the host platform (e.g. macOS-only rules) in wildcard builds.
+build --skip_incompatible_explicit_targets
+try-import %workspace%/user.bazelrc
+common --repo_env=DO_NOT_TRACK=1

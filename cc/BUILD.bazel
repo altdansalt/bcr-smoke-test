@@ -1,0 +1,56 @@
+# rules_cc smoke: the most common C/C++ rules (cc_library, cc_binary, cc_test,
+# cc_shared_library, cc_import-free), plus a select() over @platforms.
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "greeter",
+    srcs = ["greeter.cc"],
+    hdrs = ["greeter.h"],
+    defines = select({
+        "@platforms//os:linux": ["GREETER_OS=\\\"linux\\\""],
+        "@platforms//os:macos": ["GREETER_OS=\\\"macos\\\""],
+        "@platforms//os:windows": ["GREETER_OS=\\\"windows\\\""],
+        "//conditions:default": ["GREETER_OS=\\\"unknown\\\""],
+    }),
+    local_defines = select({
+        "@platforms//cpu:x86_64": ["GREETER_CPU=\\\"x86_64\\\""],
+        "@platforms//cpu:aarch64": ["GREETER_CPU=\\\"aarch64\\\""],
+        "//conditions:default": ["GREETER_CPU=\\\"other\\\""],
+    }),
+)
+
+cc_binary(
+    name = "hello",
+    srcs = ["hello.cc"],
+    deps = [":greeter"],
+)
+
+cc_test(
+    name = "greeter_test",
+    size = "small",
+    srcs = ["greeter_test.cc"],
+    deps = [
+        ":greeter",
+        "@googletest//:gtest_main",
+    ],
+)
+
+# cc_shared_library: link the greeter into a .so and consume it from a binary.
+cc_shared_library(
+    name = "greeter_shared",
+    deps = [":greeter"],
+)
+
+cc_binary(
+    name = "hello_dynamic",
+    srcs = ["hello.cc"],
+    dynamic_deps = [":greeter_shared"],
+    deps = [":greeter"],
+)
+
+# Run the binaries as tests so `bazel test //...` exercises their outputs too.
