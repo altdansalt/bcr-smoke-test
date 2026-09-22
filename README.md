@@ -151,6 +151,22 @@ attributing any code adapted from the rulesets' own examples.
 | `foreign_cc/`, `pkg/`, `perl/`, `fuzzing/`, `cc_autoconf/` | rules_foreign_cc, rules_pkg, rules_perl, rules_fuzzing, rules_cc_autoconf |
 | `apple/` | apple_support, rules_swift, rules_apple (macOS hosts only; skipped elsewhere) |
 
+## Toolchain variants
+
+The defaults mirror what most projects run: the C/C++ compiler is whatever rules_cc auto-detects on
+the host (gcc or clang), and everything else is the ruleset's hermetic toolchain. Each config below
+swaps one toolchain for the other common real-world choice; they combine freely with `--config=full`.
+
+| config | what changes |
+|---|---|
+| `--config=llvm` | hermetic LLVM from `toolchains_llvm` (latest bundled 19.x/20.x) instead of the host C/C++ compiler |
+| `--config=host_clang` / `--config=host_gcc` | force rules_cc's auto-configuration onto the host `clang` / `gcc` |
+| `--config=local_jdk` | the JDK on `PATH`/`JAVA_HOME` instead of the downloaded remote JDK |
+| `--config=local_python` | the host `python3` (introspected by rules_python's local toolchain support) instead of the downloaded CPython; the pip lock is for 3.12, so pip-dependent tests need a 3.12 host interpreter |
+
+Not offered: rules_go's `go_sdk.host()` (discouraged upstream, breaks on distro Go upgrades), and the
+Node/Rust/Kotlin/Perl rules, which have no supported host-toolchain mode.
+
 ## What your workers need
 
 The repo deliberately uses the rulesets' *default* toolchains, which is what most dependents do.

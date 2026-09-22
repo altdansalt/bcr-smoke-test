@@ -25,3 +25,16 @@ jobs:
         run: bazel test //... ${{ matrix.tier == 'full' && '--config=full' || '' }}
       - name: lockfiles unchanged
         run: git diff --exit-code
+  toolchain-variants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bazel-contrib/setup-bazel@0.15.0
+        with:
+          bazelisk-cache: true
+          disk-cache: ${{ github.workflow }}-variants
+          repository-cache: true
+      - name: hermetic LLVM + local JDK
+        run: bazel test //... --config=llvm --config=local_jdk
+      - name: host gcc
+        run: bazel test //cc/... --config=host_gcc

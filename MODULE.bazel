@@ -26,6 +26,7 @@ bazel_dep(name = "bazel_lib", version = "3.7.2")
 bazel_dep(name = "package_metadata", version = "0.0.13")
 bazel_dep(name = "apple_support", version = "2.8.4")
 bazel_dep(name = "rules_cc_autoconf", version = "0.24.0")
+bazel_dep(name = "toolchains_llvm", version = "1.9.1")  # hermetic C/C++ toolchain, opt-in via --config=llvm
 bazel_dep(name = "rules_rust", version = "0.74.0")
 bazel_dep(name = "rules_jvm_external", version = "7.1")
 bazel_dep(name = "aspect_rules_js", version = "3.4.1")
@@ -257,3 +258,38 @@ register_toolchains(
     "//contrib/toolchain_utils:all",
 )
 # --- end contrib ---
+
+# --- toolchain variants (opt-in on the command line, see .bazelrc) ---
+# Hermetic LLVM C/C++ toolchain: `--config=llvm`. Not registered here so the default stays the
+# host compiler auto-detected by rules_cc, which is what most projects still use.
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
+llvm.toolchain(
+    name = "llvm_toolchain",
+    llvm_versions = {"": "latest:>=19.0.0,<21"},
+)
+use_repo(llvm, "llvm_toolchain")
+
+# Host Python interpreter instead of the hermetic one: `--config=local_python`.
+local_runtime_repo = use_repo_rule(
+    "@rules_python//python/local_toolchains:repos.bzl",
+    "local_runtime_repo",
+)
+
+local_runtime_toolchains_repo = use_repo_rule(
+    "@rules_python//python/local_toolchains:repos.bzl",
+    "local_runtime_toolchains_repo",
+)
+
+local_runtime_repo(
+    name = "local_python3",
+    dev_dependency = True,
+    interpreter_path = "python3",
+    on_failure = "fail",
+)
+
+local_runtime_toolchains_repo(
+    name = "local_python_toolchains",
+    dev_dependency = True,
+    runtimes = ["local_python3"],
+)
+# --- end toolchain variants ---

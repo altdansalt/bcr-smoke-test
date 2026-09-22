@@ -24,3 +24,11 @@ build --java_runtime_version=remotejdk_21
 # planting step while lazily-planted external-repo links are being created) that reliably breaks
 # fully-cached `bazel test //...` runs of this repo. See docs/bazel-skymeld-symlink-race.md.
 common --noexperimental_merged_skyframe_analysis_execution
+
+# Toolchain variants. Defaults are what most projects use (host C/C++ compiler auto-detected by
+# rules_cc, hermetic everything else); each config swaps one toolchain for the other common choice.
+build:llvm --extra_toolchains=@llvm_toolchain//:all            # hermetic LLVM (toolchains_llvm)
+build:host_clang --repo_env=CC=clang                            # host clang via rules_cc auto-config
+build:host_gcc --repo_env=CC=gcc                                # host gcc via rules_cc auto-config
+build:local_jdk --java_runtime_version=local_jdk --tool_java_runtime_version=local_jdk
+build:local_python --extra_toolchains=@local_python_toolchains//:all
