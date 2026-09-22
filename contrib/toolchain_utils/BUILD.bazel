@@ -67,3 +67,6 @@ diff_test(
     file1 = ":pretty",
     file2 = "pretty.expected.sh",
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])

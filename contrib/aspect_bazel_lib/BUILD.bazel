@@ -165,3 +165,6 @@ diff_test(
     file1 = ":hello_tar_listing",
     file2 = "hello_tar.expected.txt",
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])

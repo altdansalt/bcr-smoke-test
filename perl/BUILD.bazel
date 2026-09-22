@@ -29,3 +29,6 @@ sh_test(
     args = ["$(rootpath :hello)"],
     data = [":hello"],
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])

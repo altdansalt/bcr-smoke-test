@@ -1,1 +1,4 @@
 # contrib: umbrella for the "contrib tooling" family. Each subpackage exercises one module.
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])

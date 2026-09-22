@@ -29,3 +29,6 @@ cc_fuzz_test(
     corpus = glob(["corpus/*"]),
     deps = [":kv_parser"],
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])

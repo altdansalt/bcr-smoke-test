@@ -45,3 +45,6 @@ java_test(
         "@protobuf//:protobuf_javalite",
     ],
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])

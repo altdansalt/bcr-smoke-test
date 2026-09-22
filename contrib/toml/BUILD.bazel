@@ -27,3 +27,9 @@ diff_test(
     file1 = ":encoded",
     file2 = "encoded.expected.toml",
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files([
+    "BUILD.bazel",
+    "config.bzl",
+])

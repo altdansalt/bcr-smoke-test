@@ -53,3 +53,6 @@ native_test(
     out = "jq",
     args = ["--version"],
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])

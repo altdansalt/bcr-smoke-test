@@ -23,3 +23,6 @@ go_test(
     srcs = ["main_test.go"],
     embed = [":hello_lib"],
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])

@@ -5,3 +5,6 @@ filegroup(
     srcs = glob(["**"]),
     visibility = ["//foreign_cc:__pkg__"],
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])

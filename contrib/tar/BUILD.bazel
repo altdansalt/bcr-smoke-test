@@ -67,3 +67,6 @@ diff_test(
     file1 = ":archive_app_listing",
     file2 = "archive_app.expected.txt",
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])

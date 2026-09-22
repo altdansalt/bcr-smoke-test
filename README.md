@@ -135,6 +135,33 @@ attributing any code adapted from the rulesets' own examples.
 ## Known gotchas at these versions
 
 <!-- gotchas:start -->
+- **rules_jvm_external**: protobuf and grpc-java both `maven.install` into the default `maven`
+  namespace, so the root `maven_install.json` also pins their artifacts (`known_contributing_modules`
+  lists them). Bump either module, then `REPIN=1 bazel run @maven//:pin`.
+- **rules_java**: Bazel defaults to the host JDK; `.bazelrc` sets `--java_runtime_version=remotejdk_21`
+  so `java_test`/`kt_jvm_*` work without a local JDK.
+- **rules_rust**: load crate_universe from `@rules_rust//crate_universe:extensions.bzl` (plural). The
+  deprecated singular file is one extension shared with protobuf 36.2's lockfile-less usage, which
+  fails under rules_rust 0.74. A committed `Cargo.Bazel.lock` is what keeps a clean clone offline.
+- **rules_python**: `compile_pip_requirements` is not used because its generated `.test` target needs
+  network; the lock is produced with `uv pip compile --generate-hashes` (see `python/README.md`).
+- **aspect_rules_js** with pnpm 10 requires a lifecycle allow-list (`allowBuilds: {}` in
+  `pnpm-workspace.yaml`); **aspect_rules_ts** 3.x needs an explicit `transpiler = "tsc"`.
+- **gazelle**: `go_deps` needs an existing `go.sum`; run tidy through the hermetic SDK as
+  `bazel run @rules_go//go -- mod tidy -e` (the `-e` tolerates Bazel-generated proto packages).
+- **rules_foreign_cc** 0.16 registers prebuilt cmake and ninja itself, but GNU make is built from
+  source via the BCR `make` module (a few thousand actions on first build).
+- **rules_license** 1.0.0: `write_licenses_info` crashes at analysis time if any transitive dep has
+  no license metadata, so the report target here only covers the `license/` package.
+- **rules_apple** bundling rules need a macOS execution platform and fail toolchain resolution on
+  Linux *before* `target_compatible_with` is checked; they are `manual` and reached via a
+  macOS-only `build_test`.
+- **toolchain_utils** 1.3.2's BCR entry references a package that does not exist; pinned to 1.3.0.
+- **googleapis**: the `envoy_api` version pulled in by grpc 1.84 imports a repo the latest googleapis
+  no longer generates, so `envoy_api` is bumped explicitly.
+- **toolchains_protoc** is obsolete: protobuf ≥ 33.4 has `--@protobuf//bazel/flags:prefer_prebuilt_protoc`
+  (default on). `--config=source_protoc` here turns it off.
+- Aspect rulesets phone home by default; `.bazelrc` sets `--repo_env=DO_NOT_TRACK=1`.
 <!-- gotchas:end -->
 
 ## Contributing

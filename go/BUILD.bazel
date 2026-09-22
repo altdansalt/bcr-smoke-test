@@ -9,3 +9,6 @@ gazelle(
     # Only walk this directory; the rest of the repo is not Go.
     extra_args = ["go"],
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])

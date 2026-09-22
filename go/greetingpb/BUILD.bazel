@@ -21,3 +21,6 @@ go_library(
     importpath = "github.com/bcr-smoke-test/bcr-smoke-test/go/greetingpb",
     visibility = ["//visibility:public"],
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])

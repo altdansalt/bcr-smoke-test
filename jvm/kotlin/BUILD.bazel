@@ -26,3 +26,6 @@ kt_jvm_test(
         "@maven//:junit_junit",
     ],
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])

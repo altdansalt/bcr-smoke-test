@@ -42,3 +42,6 @@ diff_test(
     file1 = ":keys",
     file2 = "keys.expected.txt",
 )
+
+# Lets //buildifier:buildifier_test lint this file hermetically.
+exports_files(["BUILD.bazel"])
