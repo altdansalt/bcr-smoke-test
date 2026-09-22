@@ -1,0 +1,5 @@
+# Root package: links every npm package from pnpm-lock.yaml into //:node_modules/<pkg>
+# (the conventional aspect_rules_js layout: package.json + pnpm-lock.yaml at the repo root).
+load("@npm//:defs.bzl", "npm_link_all_packages")
+
+npm_link_all_packages(name = "node_modules")

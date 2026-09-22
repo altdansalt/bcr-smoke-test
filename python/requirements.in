@@ -1,0 +1,5 @@
+# Inputs for requirements_lock.txt. Regenerate with:
+#   uv pip compile --generate-hashes --universal --python-version 3.12 python/requirements.in -o python/requirements_lock.txt
+six
+tomli
+pyyaml

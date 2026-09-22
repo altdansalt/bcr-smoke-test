@@ -1,0 +1,6 @@
+packages:
+  - '.'
+
+# pnpm >= 10 (and rules_js) require an explicit allow-list of packages whose lifecycle
+# scripts (preinstall/postinstall) may run. None of our dependencies need one.
+allowBuilds: {}

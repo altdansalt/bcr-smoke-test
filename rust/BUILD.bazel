@@ -1,0 +1,55 @@
+# rules_rust smoke: rust_library, rust_binary, rust_test (inline #[cfg(test)] via
+# `crate = ...` and a separate integration test), rust_doc, plus third-party
+# crates from crate_universe (`@crates//:...`, generated from Cargo.toml/Cargo.lock).
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_doc", "rust_library", "rust_test")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_library(
+    name = "bcr_smoke_rust",
+    srcs = ["src/lib.rs"],
+    deps = [
+        "@crates//:anyhow",
+        "@crates//:serde",
+        "@crates//:serde_json",
+    ],
+)
+
+rust_binary(
+    name = "hello",
+    srcs = ["src/main.rs"],
+    deps = [
+        ":bcr_smoke_rust",
+        "@crates//:anyhow",
+    ],
+)
+
+# Runs the `#[cfg(test)]` unit tests inside src/lib.rs.
+rust_test(
+    name = "unit_test",
+    size = "small",
+    crate = ":bcr_smoke_rust",
+)
+
+# A separate integration-test crate (tests/*.rs in Cargo terms).
+rust_test(
+    name = "integration_test",
+    size = "small",
+    srcs = ["tests/integration_test.rs"],
+    deps = [":bcr_smoke_rust"],
+)
+
+rust_doc(
+    name = "bcr_smoke_rust_doc",
+    crate = ":bcr_smoke_rust",
+)
+
+# Run the binary so `bazel test` exercises its output too.
+sh_test(
+    name = "hello_test",
+    size = "small",
+    srcs = ["hello_test.sh"],
+    args = ["$(rootpath :hello)"],
+    data = [":hello"],
+)

@@ -1,0 +1,13 @@
+{
+  "name": "bcr-smoke-test",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "lodash": "4.17.21",
+    "uuid": "11.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.11",
+    "typescript": "5.9.3"
+  }
+}

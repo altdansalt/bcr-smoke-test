@@ -1,0 +1,3 @@
+Hello, Bazel!
+Hello, Remote!
+Hello, Cache!

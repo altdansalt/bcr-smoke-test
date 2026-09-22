@@ -1,0 +1,27 @@
+# aspect_rules_ts smoke: ts_project compiling .ts -> .js with tsc (the TypeScript version pinned
+# in //:package.json via the `typescript` module extension), then js_test runs the emitted JS.
+load("@aspect_rules_js//js:defs.bzl", "js_test")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
+
+package(default_visibility = ["//visibility:public"])
+
+ts_project(
+    name = "greeter",
+    srcs = [
+        "greeter.ts",
+        "greeter_test.ts",
+    ],
+    # tsc is the default transpiler, but rules_ts 3.x requires saying so explicitly
+    # (or passing --@aspect_rules_ts//ts:default_to_tsc_transpiler).
+    transpiler = "tsc",
+    tsconfig = "tsconfig.json",
+    # The 'node:assert' import needs Node's ambient types.
+    deps = ["//:node_modules/@types/node"],
+)
+
+js_test(
+    name = "greeter_test",
+    size = "small",
+    data = [":greeter"],
+    entry_point = "greeter_test.js",
+)

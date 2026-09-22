@@ -8,3 +8,6 @@ build --show_progress_rate_limit=5
 build --skip_incompatible_explicit_targets
 try-import %workspace%/user.bazelrc
 common --repo_env=DO_NOT_TRACK=1
+# protobuf >= 33.4 downloads a prebuilt protoc by default. Use --config=source_protoc to
+# compile protoc from source instead (the heavier, older-style build).
+build:source_protoc --@protobuf//bazel/flags:prefer_prebuilt_protoc=false

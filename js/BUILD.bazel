@@ -1,0 +1,51 @@
+# aspect_rules_js smoke: js_library, js_binary, js_test, js_run_binary, all consuming npm
+# packages linked from the root pnpm-lock.yaml (//:node_modules/...), run on the hermetic
+# Node.js toolchain from rules_nodejs.
+load("@aspect_rules_js//js:defs.bzl", "js_binary", "js_library", "js_run_binary", "js_test")
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+
+package(default_visibility = ["//visibility:public"])
+
+js_library(
+    name = "lib",
+    srcs = ["lib.js"],
+    deps = [
+        "//:node_modules/lodash",
+        "//:node_modules/uuid",
+    ],
+)
+
+js_binary(
+    name = "hello",
+    data = [":lib"],
+    entry_point = "main.js",
+)
+
+js_test(
+    name = "lib_test",
+    size = "small",
+    data = [
+        ":lib",
+        "//:node_modules/lodash",
+    ],
+    entry_point = "lib_test.js",
+)
+
+# js_run_binary: run the js_binary as a build action and capture its stdout as an output file.
+js_run_binary(
+    name = "hello_txt",
+    args = [
+        "bazel",
+        "remote",
+        "cache",
+    ],
+    stdout = "hello.txt",
+    tool = ":hello",
+)
+
+diff_test(
+    name = "hello_txt_test",
+    size = "small",
+    file1 = "hello.expected.txt",
+    file2 = "hello.txt",
+)

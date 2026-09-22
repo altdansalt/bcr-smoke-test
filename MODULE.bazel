@@ -47,7 +47,6 @@ bazel_dep(name = "toml.bzl", version = "0.4.1")
 bazel_dep(name = "download_utils", version = "1.2.3")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_fuzzing", version = "0.8.0")
-bazel_dep(name = "toolchains_protoc", version = "0.6.1")
 
 # --- libraries (mostly consumers of rules_cc) ---
 bazel_dep(name = "zlib", version = "1.3.2")
@@ -83,3 +82,68 @@ bazel_dep(name = "gflags", version = "2.3.1")
 bazel_dep(name = "tinyxml2", version = "11.0.0")
 bazel_dep(name = "libpng", version = "1.6.58")
 bazel_dep(name = "freetype", version = "2.14.1.bcr.1")
+
+# --- rust ---
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = "2021",
+    versions = ["1.98.0"],
+)
+use_repo(rust, "rust_toolchains")
+
+register_toolchains("@rust_toolchains//:all")
+
+# Third-party crates from //rust:Cargo.toml + Cargo.lock. Cargo.Bazel.lock is the
+# crate_universe lockfile; repin with `CARGO_BAZEL_REPIN=1 bazel build //rust/...`.
+crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+crate.from_cargo(
+    name = "crates",
+    cargo_lockfile = "//rust:Cargo.lock",
+    lockfile = "//rust:Cargo.Bazel.lock",
+    manifests = ["//rust:Cargo.toml"],
+)
+use_repo(crate, "crates")
+# --- end rust ---
+
+# --- js ---
+# rules_nodejs: pin the hermetic Node.js toolchain (the root module's choice wins over
+# the defaults declared by rules_nodejs / aspect_rules_js).
+node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node")
+node.toolchain(node_version = "22.23.1")
+use_repo(node, "nodejs_toolchains")
+
+# aspect_rules_js: import npm packages from the committed pnpm lockfile.
+npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm")
+npm.npm_translate_lock(
+    name = "npm",
+    npmrc = "//:.npmrc",
+    pnpm_lock = "//:pnpm-lock.yaml",
+    verify_node_modules_ignored = "//:.bazelignore",
+)
+use_repo(npm, "npm")
+
+# Hermetic pnpm, to (re)generate the lockfile:
+#   bazel run -- @pnpm//:pnpm --dir $PWD install --lockfile-only
+pnpm = use_extension("@aspect_rules_js//npm:extensions.bzl", "pnpm")
+use_repo(pnpm, "pnpm")
+
+# aspect_rules_ts: fetch the TypeScript compiler at the version pinned in package.json.
+typescript = use_extension("@aspect_rules_ts//ts:extensions.bzl", "typescript")
+typescript.deps(version_from = "//:package.json")
+use_repo(typescript, "npm_typescript")
+# --- end js ---
+
+# --- python ---
+# Hermetic CPython toolchain (rules_python) and pip deps from python/requirements_lock.txt.
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.defaults(python_version = "3.12")
+python.toolchain(python_version = "3.12")
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "pip",
+    python_version = "3.12",
+    requirements_lock = "//python:requirements_lock.txt",
+)
+use_repo(pip, "pip")
+# --- end python ---

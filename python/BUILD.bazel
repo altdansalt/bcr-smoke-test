@@ -1,0 +1,84 @@
+# rules_python smoke: py_library, py_binary, py_test, pip deps from a committed
+# lock file, py_proto_library (protobuf), a pybind11 extension and abseil-py.
+load("@pip//:requirements.bzl", "requirement")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@protobuf//bazel:py_proto_library.bzl", "py_proto_library")
+load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+load("@rules_python//python:py_binary.bzl", "py_binary")
+load("@rules_python//python:py_library.bzl", "py_library")
+load("@rules_python//python:py_test.bzl", "py_test")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "requirements.in",
+    "requirements_lock.txt",
+])
+
+py_library(
+    name = "greeter",
+    srcs = ["greeter.py"],
+    deps = [
+        requirement("pyyaml"),
+        requirement("six"),
+    ],
+)
+
+py_binary(
+    name = "main",
+    srcs = ["main.py"],
+    deps = [":greeter"],
+)
+
+py_test(
+    name = "greeter_test",
+    size = "small",
+    srcs = ["greeter_test.py"],
+    deps = [
+        ":greeter",
+        requirement("tomli"),
+    ],
+)
+
+# abseil-py: absltest + absl.flags.
+py_test(
+    name = "absl_test",
+    size = "small",
+    srcs = ["absl_test.py"],
+    deps = [
+        ":greeter",
+        "@abseil-py//absl/flags",
+        "@abseil-py//absl/testing:absltest",
+    ],
+)
+
+# protobuf: proto_library -> py_proto_library -> *_pb2 module.
+proto_library(
+    name = "person_proto",
+    srcs = ["person.proto"],
+)
+
+py_proto_library(
+    name = "person_py_proto",
+    deps = [":person_proto"],
+)
+
+py_test(
+    name = "person_test",
+    size = "small",
+    srcs = ["person_test.py"],
+    deps = [":person_py_proto"],
+)
+
+# pybind11_bazel: C++ extension module imported from a py_test.
+pybind_extension(
+    name = "fastmath",
+    srcs = ["fastmath.cc"],
+)
+
+py_test(
+    name = "fastmath_test",
+    size = "small",
+    srcs = ["fastmath_test.py"],
+    deps = [":fastmath"],
+)

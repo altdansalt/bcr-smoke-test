@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package bcr_smoke.python;
+
+message Person {
+  string name = 1;
+  int32 id = 2;
+  repeated string emails = 3;
+}
