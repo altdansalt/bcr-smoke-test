@@ -60,11 +60,13 @@ proto_library(
 
 py_proto_library(
     name = "person_py_proto",
+    tags = ["heavy"],
     deps = [":person_proto"],
 )
 
 py_test(
     name = "person_test",
+    tags = ["heavy"],
     size = "small",
     srcs = ["person_test.py"],
     deps = [":person_py_proto"],

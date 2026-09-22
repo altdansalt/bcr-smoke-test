@@ -1,11 +1,18 @@
 # Appended to the variables emitted by ./configure.
+# rules_foreign_cc exports AR from the Bazel C++ toolchain. On Apple platforms that is
+# libtool, which takes `-static -o <out>` instead of `rcs <out>`.
+ifeq ($(notdir $(AR)),libtool)
+ARCHIVE = $(AR) -static -o
+else
+ARCHIVE = $(AR) rcs
+endif
 all: libadd.a
 
 add.o: add.c add.h
 	$(CC) $(CFLAGS) -c -o add.o add.c
 
 libadd.a: add.o
-	$(AR) rcs libadd.a add.o
+	$(ARCHIVE) libadd.a add.o
 
 install: libadd.a
 	mkdir -p $(prefix)/lib $(prefix)/include

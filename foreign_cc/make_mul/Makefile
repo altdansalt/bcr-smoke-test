@@ -4,6 +4,13 @@
 PREFIX ?= install
 
 AR ?= ar
+# rules_foreign_cc exports AR from the Bazel C++ toolchain. On Apple platforms that is
+# libtool, which takes `-static -o <out>` instead of `rcs <out>`.
+ifeq ($(notdir $(AR)),libtool)
+ARCHIVE = $(AR) -static -o
+else
+ARCHIVE = $(AR) rcs
+endif
 
 all: libmul.a
 
@@ -11,7 +18,7 @@ mul.o: mul.c mul.h
 	$(CC) $(CFLAGS) -c -o mul.o mul.c
 
 libmul.a: mul.o
-	$(AR) rcs libmul.a mul.o
+	$(ARCHIVE) libmul.a mul.o
 
 install: libmul.a
 	mkdir -p $(PREFIX)/lib $(PREFIX)/include
