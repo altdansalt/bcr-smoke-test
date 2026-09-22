@@ -5,7 +5,7 @@ add.o: add.c add.h
 	$(CC) $(CFLAGS) -c -o add.o add.c
 
 libadd.a: add.o
-	ar rcs libadd.a add.o
+	$(AR) rcs libadd.a add.o
 
 install: libadd.a
 	mkdir -p $(prefix)/lib $(prefix)/include

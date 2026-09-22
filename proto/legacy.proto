@@ -1,0 +1,8 @@
+// Declared via the legacy load("@rules_proto//proto:defs.bzl", "proto_library").
+syntax = "proto3";
+
+package smoke.proto;
+
+message LegacyPing {
+  uint64 seq = 1;
+}

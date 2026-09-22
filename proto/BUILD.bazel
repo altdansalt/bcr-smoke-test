@@ -1,0 +1,43 @@
+# protobuf smoke: proto_library + cc_proto_library (loaded from @protobuf), a
+# cross-repo dep on a well-known type, and one proto_library loaded through the
+# legacy @rules_proto shim.
+load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_proto//proto:defs.bzl", legacy_proto_library = "proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+proto_library(
+    name = "greeting_proto",
+    srcs = ["greeting.proto"],
+    deps = ["@protobuf//:timestamp_proto"],
+)
+
+cc_proto_library(
+    name = "greeting_cc_proto",
+    deps = [":greeting_proto"],
+)
+
+# rules_proto 7.x is a thin shim that re-exports protobuf's proto_library; many
+# repos still load it from here.
+legacy_proto_library(
+    name = "legacy_proto",
+    srcs = ["legacy.proto"],
+)
+
+cc_proto_library(
+    name = "legacy_cc_proto",
+    deps = [":legacy_proto"],
+)
+
+cc_test(
+    name = "greeting_test",
+    size = "small",
+    srcs = ["greeting_test.cc"],
+    deps = [
+        ":greeting_cc_proto",
+        ":legacy_cc_proto",
+        "@googletest//:gtest_main",
+    ],
+)

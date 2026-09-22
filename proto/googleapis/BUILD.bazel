@@ -1,0 +1,35 @@
+# googleapis smoke: depend on @googleapis proto_library targets, and on the
+# cc_proto_library / cc_grpc_library targets that googleapis-cc and
+# googleapis-grpc-cc make available inside @googleapis.
+load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+package(default_visibility = ["//visibility:public"])
+
+proto_library(
+    name = "result_proto",
+    srcs = ["result.proto"],
+    deps = [
+        "@googleapis//google/rpc:status_proto",
+        "@googleapis//google/type:date_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "result_cc_proto",
+    deps = [":result_proto"],
+)
+
+cc_test(
+    name = "result_test",
+    size = "small",
+    srcs = ["result_test.cc"],
+    deps = [
+        ":result_cc_proto",
+        "@googleapis//google/longrunning:longrunning_cc_grpc",
+        "@googleapis//google/rpc:status_cc_proto",
+        "@googletest//:gtest_main",
+        "@grpc//:grpc++",
+    ],
+)

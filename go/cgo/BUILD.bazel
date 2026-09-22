@@ -1,0 +1,20 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "cgo",
+    srcs = [
+        "cgo.go",
+        "square.c",
+        "square.h",
+    ],
+    cgo = True,
+    importpath = "github.com/bcr-smoke-test/bcr-smoke-test/go/cgo",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "cgo_test",
+    size = "small",
+    srcs = ["cgo_test.go"],
+    embed = [":cgo"],
+)

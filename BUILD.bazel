@@ -3,3 +3,9 @@
 load("@npm//:defs.bzl", "npm_link_all_packages")
 
 npm_link_all_packages(name = "node_modules")
+
+# Lets //buildifier:buildifier_test lint the root files hermetically.
+exports_files([
+    "BUILD.bazel",
+    "MODULE.bazel",
+])

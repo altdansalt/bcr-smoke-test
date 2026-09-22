@@ -21,43 +21,49 @@ Point it at your service the usual way, for example:
 
 ```sh
 bazel test //... --remote_cache=grpcs://cache.example.com
-bazel test //... --remote_executor=grpcs://rbe.example.com --platforms=//platforms:rbe   # etc.
+bazel test //... --remote_executor=grpcs://rbe.example.com --extra_execution_platforms=... --extra_toolchains=...
 ```
 
 (`user.bazelrc` is `.gitignore`d and imported by `.bazelrc`, so you can keep those flags there.)
+See "Validating a remote cache or RBE service" below for a procedure that actually proves the
+service was used, and "What your workers need" for the execution-platform contract.
 
 ## How the modules were chosen
 
 Modules are ranked by **direct dependents in the BCR**: the number of *other* modules whose
 latest (non-yanked) version declares a non-dev `bazel_dep` on them, `boost.*` excluded because
 its ~150 sub-modules would swamp the ranking. The script is `tools/bcr_dependents.py` and the
-snapshot (BCR `main` on 2026-09-18) is `docs/bcr_direct_dependents.csv`. The repo covers the top
-50 plus a handful of very common modules just below the cut. Each module is pinned at the latest
-version in the BCR at snapshot time, with the exceptions noted in the table.
+snapshot (BCR `main` at commit `c5543c07`, 2026-09-18) is `docs/bcr_direct_dependents.csv`. The
+repo covers the top 50 plus a handful of very common modules just below the cut. Each `bazel_dep`
+requests the latest version in the BCR at snapshot time (Bazel's version selection may pick a
+higher one if another module asks for it; `bazel mod graph --depth=1` shows what was resolved),
+with the exceptions noted in the table. The "exercised in" column is derived from textual
+`@module` references in BUILD/.bzl files (`tools/gen_readme_table.py`); the per-directory READMEs
+say exactly which rules are built and which tests execute.
 
 <!-- table:start -->
 | # | module | direct dependents | version here | exercised in | note |
 |--:|---|--:|---|---|---|
-| 1 | `rules_cc` | 769 | 0.2.25 | `apple/`, `cc/` |  |
-| 2 | `platforms` | 606 | 1.1.0 | `apple/`, `cc/` |  |
-| 3 | `bazel_skylib` | 561 | 1.9.2 | `apple/`, `js/` |  |
-| 4 | `rules_license` | 184 | 1.0.0 |  |  |
+| 1 | `rules_cc` | 769 | 0.2.25 | `apple/`, `cc/`, `cc_autoconf/`, `foreign_cc/`, `fuzzing/`, `proto/` |  |
+| 2 | `platforms` | 606 | 1.1.0 | `apple/`, `cc/`, `platforms/`, `skylib/` |  |
+| 3 | `bazel_skylib` | 561 | 1.9.2 | `apple/`, `contrib/`, `js/`, `license/`, `pkg/`, `platforms/`, `skylib/`, `stardoc/` |  |
+| 4 | `rules_license` | 184 | 1.0.0 | `license/` |  |
 | 5 | `rules_python` | 155 | 2.3.3 | `python/` |  |
-| 6 | `protobuf` | 129 | 36.2 | `go/`, `python/` |  |
-| 7 | `rules_shell` | 121 | 0.8.0 | `rust/` |  |
+| 6 | `protobuf` | 129 | 36.2 | `go/`, `jvm/`, `proto/`, `python/` |  |
+| 7 | `rules_shell` | 121 | 0.8.0 | `cc/`, `contrib/`, `license/`, `perl/`, `pkg/`, `rust/`, `shell/` |  |
 | 8 | `rules_go` | 93 | 0.63.0 | `go/` |  |
 | 9 | `zlib` | 86 | 1.3.2 | `cc/` |  |
-| 10 | `googletest` | 77 | 1.18.0.bcr.1 | `cc/` |  |
+| 10 | `googletest` | 77 | 1.18.0.bcr.1 | `cc/`, `fuzzing/`, `proto/` |  |
 | 11 | `gazelle` | 73 | 0.54.0 | `go/` |  |
-| 12 | `rules_java` | 68 | 9.9.0 |  |  |
-| 13 | `bazel_features` | 66 | 1.51.0 |  |  |
-| 14 | `bazel_lib` | 65 | 3.7.2 |  |  |
-| 15 | `rules_proto` | 62 | 7.1.0 |  |  |
+| 12 | `rules_java` | 68 | 9.9.0 | `jvm/` |  |
+| 13 | `bazel_features` | 66 | 1.51.0 | `skylib/` |  |
+| 14 | `bazel_lib` | 65 | 3.7.2 | `contrib/` |  |
+| 15 | `rules_proto` | 62 | 7.1.0 | `proto/` |  |
 | 16 | `abseil-cpp` | 57 | 20260817.0 | `cc/` |  |
-| 17 | `package_metadata` | 49 | 0.0.13 |  |  |
+| 17 | `package_metadata` | 49 | 0.0.13 | `license/` |  |
 | 18 | `apple_support` | 48 | 2.8.4 |  |  |
-| 19 | `rules_cc_autoconf` | 45 | 0.24.0 |  |  |
-| 20 | `aspect_bazel_lib` | 44 | 2.22.5 |  |  |
+| 19 | `rules_cc_autoconf` | 45 | 0.24.0 | `cc_autoconf/` |  |
+| 20 | `aspect_bazel_lib` | 44 | 2.22.5 | `contrib/` |  |
 | 21 | `rules_rust` | 36 | 0.74.0 | `rust/` |  |
 | 22 | `openssl` | 35 | 4.0.1.bcr.0 | `cc/` |  |
 | 23 | `rules_swift` | 33 | 4.1.0 | `apple/` |  |
@@ -65,15 +71,15 @@ version in the BCR at snapshot time, with the exceptions noted in the table.
 | 25 | `aspect_rules_js` | 31 | 3.4.1 | `js/` |  |
 | 26 | `eigen` | 29 | 5.0.1.bcr.2 | `cc/` |  |
 | 27 | `boringssl` | 28 | 0.20260813.0 | `cc/` |  |
-| 28 | `grpc` | 28 | 1.84.0 |  |  |
-| 29 | `buildifier_prebuilt` | 27 | 10.0.1 |  |  |
+| 28 | `grpc` | 28 | 1.84.0 | `proto/` |  |
+| 29 | `buildifier_prebuilt` | 27 | 10.0.1 | `buildifier/` |  |
 | 30 | `re2` | 26 | 2025-11-05.bcr.1 | `cc/` |  |
 | 31 | `zstd` | 24 | 1.5.7.bcr.2 | `cc/` |  |
 | 32 | `cmake_configure_file` | 23 | 0.1.7 | `cc/` |  |
 | 33 | `rules_nodejs` | 23 | 6.7.5 |  |  |
-| 34 | `rules_pkg` | 22 | 1.3.0 |  |  |
+| 34 | `rules_pkg` | 22 | 1.3.0 | `pkg/` |  |
 | 35 | `fmt` | 20 | 12.2.0 | `cc/` |  |
-| 36 | `googleapis` | 18 | 0.0.0-20260825-d10ac924 |  |  |
+| 36 | `googleapis` | 18 | 0.0.0-20260825-d10ac924 | `proto/` |  |
 | 37 | `curl` | 17 | 8.21.0.bcr.2 | `cc/` |  |
 | 38 | `google_benchmark` | 17 | 1.9.5 | `cc/` |  |
 | 39 | `nlohmann_json` | 17 | 3.12.0.bcr.2 | `cc/` |  |
@@ -85,12 +91,12 @@ version in the BCR at snapshot time, with the exceptions noted in the table.
 | 45 | `pybind11_bazel` | 14 | 3.0.1 | `python/` |  |
 | 46 | `rules_proto_grpc` | 14 | — |  | left out: its dependents are almost entirely its own per-language plugin modules |
 | 47 | `freetype` | 13 | 2.14.1.bcr.1 | `cc/` |  |
-| 48 | `toolchain_utils` | 13 | 1.3.0 |  | 1.3.2 is broken in the BCR (references a missing package); pinned to 1.3.0 |
+| 48 | `toolchain_utils` | 13 | 1.3.0 | `contrib/` | 1.3.2 is broken in the BCR (references a missing package); pinned to 1.3.0 |
 | 49 | `glib` | 12 | — |  | left out: large GNOME base library, rarely a build-system concern |
 | 50 | `libpng` | 12 | 1.6.58 | `cc/` |  |
 | 51 | `rules_android` | 12 | — |  | left out: needs a locally installed Android SDK (`ANDROID_HOME`), not hermetic |
 | 52 | `rules_autoconf` | 12 | — |  | exercised transitively via `rules_cc_autoconf` |
-| 53 | `rules_foreign_cc` | 12 | 0.16.0 |  |  |
+| 53 | `rules_foreign_cc` | 12 | 0.16.0 | `foreign_cc/` |  |
 | 54 | `rules_gazebo` | 12 | — |  | left out: Gazebo-specific |
 | 55 | `tinyxml2` | 12 | 11.0.0 | `cc/` |  |
 | 56 | `boost.algorithm` | 11 | — |  | not included |
@@ -108,10 +114,11 @@ attributing any code adapted from the rulesets' own examples.
 | directory | modules |
 |---|---|
 | `cc/` | rules_cc, googletest, cmake_configure_file and 23 C/C++ library modules |
+| `third_party/` | upstream license texts for the few adapted example files |
 | `proto/` | protobuf, rules_proto, grpc, googleapis, googleapis-cc |
 | `jvm/` | rules_java, rules_jvm_external, rules_kotlin, grpc-java |
 | `python/` | rules_python, pybind11_bazel, abseil-py, py_proto_library |
-| `go/` | rules_go, gazelle, go_proto_library |
+| `go/` | rules_go (incl. cgo), gazelle, go_proto_library |
 | `rust/` | rules_rust (hermetic toolchain, crate_universe) |
 | `js/` | aspect_rules_js, rules_nodejs, aspect_rules_ts |
 | `shell/`, `skylib/`, `platforms/`, `license/`, `stardoc/`, `buildifier/` | rules_shell, bazel_skylib, bazel_features, platforms, rules_license, package_metadata, stardoc, buildifier_prebuilt |
@@ -119,11 +126,52 @@ attributing any code adapted from the rulesets' own examples.
 | `foreign_cc/`, `pkg/`, `perl/`, `fuzzing/`, `cc_autoconf/` | rules_foreign_cc, rules_pkg, rules_perl, rules_fuzzing, rules_cc_autoconf |
 | `apple/` | apple_support, rules_swift, rules_apple (macOS hosts only; skipped elsewhere) |
 
+## What your workers need
+
+The repo deliberately uses the rulesets' *default* toolchains, which is what most dependents do.
+That means a remote executor's worker image must provide what a typical developer machine does:
+
+- a C/C++ compiler and binutils (`gcc`/`clang`, `ar`, `ld`) picked up by `rules_cc`'s
+  auto-configured toolchain — or bring your own hermetic toolchain via `--extra_toolchains`
+  and `--extra_execution_platforms` / `--host_platform`, as you would for any C++ RBE setup;
+- `bash` and POSIX utilities (`coreutils`, `grep`, `sed`, `tr`, `find`): Bazel's test runner and
+  the shell-based rulesets (rules_shell, rules_foreign_cc, bazel_skylib's `run_binary` tools)
+  assume them;
+- the ability to run downloaded binaries (prebuilt `protoc`, Node.js, Go, Rust, JDK, cmake, ninja,
+  jq, buildifier ...) — glibc-based Linux x86_64/arm64 or macOS.
+
+Everything else (Python, Node, JDK, Go, Rust, Perl, cmake/ninja, protoc, buildifier, jq, ...) is
+fetched by module extensions and shipped to workers as action inputs. Apple targets need macOS
+workers with Xcode.
+
+## Validating a remote cache or RBE service
+
+Green `bazel test //...` alone only proves the build works *somewhere*. To prove the remote service
+did the work:
+
+```sh
+# 1. Populate the remote cache from a fresh output base, no disk cache.
+bazel --output_base=/tmp/ob1 test //... --disk_cache= --remote_cache=grpcs://cache.example.com \
+    --execution_log_compact_file=/tmp/exec1.log
+# 2. Rebuild from another fresh output base and check that actions were cache hits.
+bazel --output_base=/tmp/ob2 test //... --disk_cache= --remote_cache=grpcs://cache.example.com \
+    --execution_log_compact_file=/tmp/exec2.log
+#    The console summary should report "N remote cache hit"; the execution log lists per-action
+#    `cacheHit`/`runner` details (see https://bazel.build/remote/cache-remote).
+# 3. For remote execution, forbid local fallback so every action must run remotely.
+bazel --output_base=/tmp/ob3 test //... --disk_cache= --remote_executor=grpcs://rbe.example.com \
+    --remote_local_fallback=false --noremote_accept_cached --nocache_test_results \
+    --remote_download_minimal
+```
+
+`--noremote_accept_cached` forces real execution; `--remote_download_minimal` additionally checks
+that nothing in the build depends on outputs being materialized locally.
+
 ## Platform notes
 
 - Verified on Linux x86_64 (Bazel 9.2.0, see `.bazelversion`). CI also runs macOS.
-- macOS-only rules are gated with `target_compatible_with = ["@platforms//os:macos"]`, so
-  `bazel build //...` skips them on Linux (`--skip_incompatible_explicit_targets` is set).
+- macOS-only rules are gated with `target_compatible_with = ["@platforms//os:macos"]`; wildcard
+  patterns such as `//...` skip incompatible targets automatically on Linux.
   `rules_apple` bundling rules additionally need a macOS *execution* platform and are only
   reached through a macOS-only `build_test`.
 - Network is used only by repository rules and module extensions (fetching toolchains and
@@ -142,7 +190,8 @@ attributing any code adapted from the rulesets' own examples.
   so `java_test`/`kt_jvm_*` work without a local JDK.
 - **rules_rust**: load crate_universe from `@rules_rust//crate_universe:extensions.bzl` (plural). The
   deprecated singular file is one extension shared with protobuf 36.2's lockfile-less usage, which
-  fails under rules_rust 0.74. A committed `Cargo.Bazel.lock` is what keeps a clean clone offline.
+  fails under rules_rust 0.74. A committed `Cargo.Bazel.lock` is what keeps a clean clone from
+  needing `cargo` to re-resolve at fetch time.
 - **rules_python**: `compile_pip_requirements` is not used because its generated `.test` target needs
   network; the lock is produced with `uv pip compile --generate-hashes` (see `python/README.md`).
 - **aspect_rules_js** with pnpm 10 requires a lifecycle allow-list (`allowBuilds: {}` in

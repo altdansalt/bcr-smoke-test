@@ -3,10 +3,10 @@
 # the listed BUILD/.bzl files (mode=diff, lint=warn) as part of `bazel test //...`.
 load("@buildifier_prebuilt//:rules.bzl", "buildifier", "buildifier_test")
 
-# Files linted hermetically by the test (add new packages here). //:MODULE.bazel
-# and //:BUILD.bazel would need exports_files() in the root BUILD; the run
-# targets below cover them.
+# Every BUILD/.bzl file in the repo, linted hermetically (regenerate: tools/update_buildifier_list.py).
 STARLARK_FILES = [
+    "//:BUILD.bazel",
+    "//:MODULE.bazel",
     "//apple:BUILD.bazel",
     ":BUILD.bazel",
     "//cc/libs:BUILD.bazel",

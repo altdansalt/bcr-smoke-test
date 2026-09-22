@@ -1,0 +1,12 @@
+// Imports two googleapis protos to exercise @googleapis proto_library deps.
+syntax = "proto3";
+
+package smoke.googleapis;
+
+import "google/rpc/status.proto";
+import "google/type/date.proto";
+
+message Result {
+  google.rpc.Status status = 1;
+  google.type.Date when = 2;
+}

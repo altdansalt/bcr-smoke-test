@@ -82,13 +82,20 @@ verify_archive_test(
     verify_links = {"opt/smoke/usr/bin/hi": "hello"},
 )
 
-# Independent check with plain `tar tf` and a mode assertion.
+# Independent check with the hermetic bsdtar from tar.bzl's toolchain (no host `tar`).
 sh_test(
     name = "smoke_tar_test",
     size = "small",
     srcs = ["smoke_tar_test.sh"],
-    args = ["$(rootpath :smoke_tar)"],
-    data = [":smoke_tar"],
+    args = [
+        "$(BSDTAR_BIN)",
+        "$(rootpath :smoke_tar)",
+    ],
+    data = [
+        ":smoke_tar",
+        "@bsd_tar_toolchains//:resolved_toolchain",
+    ],
+    toolchains = ["@bsd_tar_toolchains//:resolved_toolchain"],
 )
 
 build_test(

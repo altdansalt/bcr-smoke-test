@@ -3,7 +3,11 @@
 ## What's happening right now
 Merged: cc, apple, rust, js, python, go, starlark tooling, native, jvm, contrib — 110 test targets, 107 green on Linux (3 macOS-only skipped).
 Found and worked around a Bazel 9.x Skymeld symlink-forest race that breaks fully-cached runs (docs/bazel-skymeld-symlink-race.md).
-Still outstanding: proto/grpc family (its agent is finishing the heavy grpc C++ build).
+All ten families merged (proto/grpc included). Codex review done (16 findings) and acted on: hermetic
+bsdtar in the pkg test, $(AR) in foreign_cc Makefiles, POSIX shout.sh, c-ares test without resolver discovery,
+ape Make variable pinned, cgo example, hello_dynamic run test, third_party/ license notices, README
+'worker contract' + 'validating a remote cache/RBE' sections, .gitignore fix. Running the final full build/test now;
+then strip progress files and publish.
 Then: full `bazel build //...` + `bazel test //...`, codex review, publish the public repo.
 
 ## Plan

@@ -1,6 +1,6 @@
 # apple_support / rules_swift / rules_apple smoke. These only build on macOS with
-# Xcode, so every target is gated with target_compatible_with; on Linux
-# `bazel build //...` skips them (see --skip_incompatible_explicit_targets).
+# Xcode, so every target is gated with target_compatible_with; wildcard patterns
+# like `bazel build //...` skip incompatible targets automatically on Linux.
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@rules_apple//apple:macos.bzl", "macos_command_line_application")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")

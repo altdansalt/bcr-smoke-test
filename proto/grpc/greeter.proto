@@ -1,0 +1,17 @@
+// Tiny unary service (slimmed from grpc/examples/protos/helloworld.proto,
+// Apache-2.0, https://github.com/grpc/grpc).
+syntax = "proto3";
+
+package smoke.grpc;
+
+service Greeter {
+  rpc SayHello(HelloRequest) returns (HelloReply) {}
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloReply {
+  string message = 1;
+}

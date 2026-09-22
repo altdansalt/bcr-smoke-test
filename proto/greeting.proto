@@ -1,0 +1,12 @@
+// Message-only proto exercising a cross-repo dep on a well-known type.
+syntax = "proto3";
+
+package smoke.proto;
+
+import "google/protobuf/timestamp.proto";
+
+message Greeting {
+  string name = 1;
+  int32 times = 2;
+  google.protobuf.Timestamp sent_at = 3;
+}

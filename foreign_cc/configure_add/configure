@@ -15,6 +15,7 @@ done
 {
   echo "CC = ${CC:-cc}"
   echo "CFLAGS = ${CFLAGS:-}"
+  echo "AR = ${AR:-ar}"
   echo "prefix = ${prefix}"
   cat Makefile.in
 } > Makefile
