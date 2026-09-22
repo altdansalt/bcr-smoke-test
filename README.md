@@ -210,8 +210,9 @@ that nothing in the build depends on outputs being materialized locally.
   no longer generates, so `envoy_api` is bumped explicitly.
 - **toolchains_protoc** is obsolete: protobuf ≥ 33.4 has `--@protobuf//bazel/flags:prefer_prebuilt_protoc`
   (default on). `--config=source_protoc` here turns it off.
-- **Bazel 9.x Skymeld**: with everything cached, lazily planted `execroot/_main/external/*` symlinks
-  race the eager execroot wipe and `bazel test //...` fails with ENOENT on `external/...` paths.
+- **Bazel 9.x Skymeld**: a main repo with case-clashing top-level names (here `LICENSE` and
+  `license/`) makes lazily planted `execroot/_main/external/*` symlinks fail with ENOENT, so
+  `bazel test //...` fails on `external/...` paths.
   `.bazelrc` disables Skymeld (`--noexperimental_merged_skyframe_analysis_execution`); details and
   an upstream-ready report in `docs/bazel-skymeld-symlink-race.md`.
 - Aspect rulesets phone home by default; `.bazelrc` sets `--repo_env=DO_NOT_TRACK=1`.

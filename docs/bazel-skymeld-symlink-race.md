@@ -1,4 +1,4 @@
-# Bazel 9.x: Skymeld race wipes lazily planted `execroot/_main/external/*` symlinks
+# Bazel 9.x Skymeld: `execroot/_main/external/` never created when the main repo has case-clashing top-level names
 
 Found while building this repo (2026-09-22). Reproduced on Bazel 9.1.0, 9.2.0 and 9.3.0rc2 on Linux x86_64.
 Worked around in `.bazelrc` with `common --noexperimental_merged_skyframe_analysis_execution`.
@@ -49,32 +49,45 @@ freshly started server with a populated `--disk_cache` (Bazel 9.1.0, 9.2.0, 9.3.
 Skymeld disabled (4/4 clean runs). The mechanism below is a hypothesis from reading the source that
 matches the log evidence; it has not been confirmed with a debugger.
 
-## Mechanism (reading Bazel 9.2.0 sources)
+## Mechanism (confirmed)
 
-`ExecutionTool.prepareForExecution` does, in this order:
+The trigger is a **case-insensitive name clash between two top-level entries of the main
+repository**: this repo has a `LICENSE` file and a `license/` package. When such a clash exists,
+`SymlinkForest.eagerlyPlantSymlinkForestSinglePackagePath` does not plant those entries eagerly;
+`IncrementalPackageRoots` plants the *package* one lazily when a top-level target that uses it is
+ready, and records the planted link in `lazilyPlantedSymlinks`.
 
-1. `IncrementalPackageRoots.createAndRegisterToEventBus(...)` — subscribes to
-   `TopLevelTargetReadyForSymlinkPlanting` events, and
-2. `incrementalPackageRoots.eagerlyPlantSymlinksToSingleSourceRoot()` →
-   `SymlinkForest.eagerlyPlantSymlinkForestSinglePackagePath`, whose first statement is
-   `deleteTreesBelowNotPrefixed(execroot, "bazel-")`, which deletes `execroot/_main/external/`.
+That same set is passed to `SymlinkForest.plantSingleSymlinkForExternalRepo` as
+`alreadyPlantedExternalRepoLinks`, and it is the only thing that decides whether
+`execroot/_main/external/` gets created:
 
-Under Skymeld, analysis runs concurrently with this. When top-level targets are already analyzed
-(warm server, or very fast analysis), their events arrive between steps 1 and 2 and
-`lazilyPlantSymlinks` starts planting `execroot/_main/external/<repo>` links on the 200-thread
-planting pool. Step 2 then deletes the `external` directory under them:
+```java
+if (alreadyPlantedExternalRepoLinks.isEmpty()) {
+  execroot.getRelative("external").createDirectoryAndParents();
+}
+if (!alreadyPlantedExternalRepoLinks.add(execrootLink)) return Optional.empty();
+execrootLink.createSymbolicLink(source);   // ENOENT if external/ was never created
+```
 
-- planters still in flight fail with `FileNotFoundException` (the log lines above), and
-- links that were already planted are silently deleted, but stay in `lazilyPlantedSymlinks`, so
-  they are never re-planted (`plantSingleSymlinkForExternalRepo` also only re-creates the
-  `external` directory when that set is empty).
+So as soon as the main-repo `license` link has been recorded, every external-repo planter that
+runs before some other planter happened to create `external/` sees a non-empty set, skips the
+`mkdir`, and fails with `FileNotFoundException`. The planters run on a 200-thread pool per
+event, so which ones fail is a race, but any event batch that contains `//license` (here:
+`//buildifier:buildifier_test`, whose `srcs` include `//license:BUILD.bazel`) reliably loses some
+links. Failed links stay in the set and are never retried, so later actions hit ENOENT.
 
-Actions that later need those repos (test-setup.sh from `bazel_tools`, tool directories, …)
-fail with ENOENT. The non-Skymeld path plants the whole forest up front, before execution, and is
-not affected.
+Evidence:
 
-A fix would be to finish the eager planting (the deletion in particular) before registering the
-subscriber, or to hold `stateLock` around the delete/plant sequence.
+- 5/5 runs of `bazel test //buildifier:buildifier_test --experimental_merged_skyframe_analysis_execution --nocache_test_results`
+  fail with the clash present; 0/5 fail after `git mv LICENSE LICENSE.txt` (nothing else changed).
+- The first occurrence in this repo's history coincides exactly with adding `//license:BUILD.bazel`
+  to that test's `srcs`, and no agent workspace that lacked the `LICENSE` file ever hit it.
+- A `--profile` confirms `prepareForExecution` (the eager wipe/plant) completes before any lazy
+  planting, ruling out an earlier hypothesis of a delete/plant race.
+
+Fix: keep main-repo lazily planted links and external-repo links in separate sets (or simply
+always `createDirectoryAndParents()` for `external/`, which is idempotent). Branch with a failing
+test and the fix: see the link in the README.
 
 ## Not the same as
 
