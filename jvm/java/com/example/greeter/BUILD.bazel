@@ -19,6 +19,7 @@ java_library(
 java_library(
     name = "greeter_service",
     srcs = ["GreeterService.java"],
+    tags = ["heavy"],
     deps = [
         ":greeter",
         "//jvm:greeter_java_grpc",

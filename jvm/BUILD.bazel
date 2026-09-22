@@ -25,6 +25,7 @@ java_lite_proto_library(
 java_grpc_library(
     name = "greeter_java_grpc",
     srcs = [":greeter_proto"],
+    tags = ["heavy"],
     deps = [":greeter_java_proto"],
 )
 

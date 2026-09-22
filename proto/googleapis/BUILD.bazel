@@ -18,6 +18,7 @@ proto_library(
 
 cc_proto_library(
     name = "result_cc_proto",
+    tags = ["heavy"],
     deps = [":result_proto"],
 )
 
@@ -25,6 +26,7 @@ cc_test(
     name = "result_test",
     size = "small",
     srcs = ["result_test.cc"],
+    tags = ["heavy"],
     deps = [
         ":result_cc_proto",
         "@googleapis//google/longrunning:longrunning_cc_grpc",

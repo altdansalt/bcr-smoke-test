@@ -9,6 +9,7 @@ package(default_visibility = ["//visibility:public"])
 rust_library(
     name = "bcr_smoke_rust",
     srcs = ["src/lib.rs"],
+    tags = ["heavy"],
     deps = [
         "@crates//:anyhow",
         "@crates//:serde",
@@ -19,6 +20,7 @@ rust_library(
 rust_binary(
     name = "hello",
     srcs = ["src/main.rs"],
+    tags = ["heavy"],
     deps = [
         ":bcr_smoke_rust",
         "@crates//:anyhow",
@@ -30,6 +32,7 @@ rust_test(
     name = "unit_test",
     size = "small",
     crate = ":bcr_smoke_rust",
+    tags = ["heavy"],
 )
 
 # A separate integration-test crate (tests/*.rs in Cargo terms).
@@ -37,12 +40,14 @@ rust_test(
     name = "integration_test",
     size = "small",
     srcs = ["tests/integration_test.rs"],
+    tags = ["heavy"],
     deps = [":bcr_smoke_rust"],
 )
 
 rust_doc(
     name = "bcr_smoke_rust_doc",
     crate = ":bcr_smoke_rust",
+    tags = ["heavy"],
 )
 
 # Run the binary so `bazel test` exercises its output too.
@@ -52,4 +57,18 @@ sh_test(
     srcs = ["hello_test.sh"],
     args = ["$(rootpath :hello)"],
     data = [":hello"],
+    tags = ["heavy"],
+)
+
+# Fast tier: rules_rust without third-party crates (no crate_universe generator build).
+rust_library(
+    name = "plain",
+    srcs = ["src/plain.rs"],
+    crate_name = "plain",
+)
+
+rust_test(
+    name = "plain_test",
+    size = "small",
+    crate = ":plain",
 )

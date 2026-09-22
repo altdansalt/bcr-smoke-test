@@ -6,6 +6,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_library", "kt_jvm
 kt_jvm_library(
     name = "shout",
     srcs = ["Shout.kt"],
+    tags = ["heavy"],
     deps = ["//jvm/java/com/example/greeter"],
 )
 
@@ -13,6 +14,7 @@ kt_jvm_binary(
     name = "shout_bin",
     srcs = ["Main.kt"],
     main_class = "com.example.shout.MainKt",
+    tags = ["heavy"],
     deps = [":shout"],
 )
 
@@ -20,6 +22,7 @@ kt_jvm_test(
     name = "ShoutTest",
     size = "small",
     srcs = ["ShoutTest.kt"],
+    tags = ["heavy"],
     test_class = "com.example.shout.ShoutTest",
     deps = [
         ":shout",

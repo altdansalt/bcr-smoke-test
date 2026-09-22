@@ -9,6 +9,7 @@ cmake(
     name = "greet",
     lib_source = "//foreign_cc/cmake_greet:all_srcs",
     out_static_libs = ["libgreet.a"],
+    tags = ["heavy"],
 )
 
 # cmake() again, this time with the Ninja generator (hermetic ninja).
@@ -23,6 +24,7 @@ cc_test(
     name = "greet_test",
     size = "small",
     srcs = ["greet_test.c"],
+    tags = ["heavy"],
     deps = [":greet"],
 )
 
@@ -39,12 +41,14 @@ configure_make(
     configure_in_place = True,
     lib_source = "//foreign_cc/configure_add:all_srcs",
     out_static_libs = ["libadd.a"],
+    tags = ["heavy"],
 )
 
 cc_test(
     name = "add_test",
     size = "small",
     srcs = ["add_test.c"],
+    tags = ["heavy"],
     deps = [":add"],
 )
 
@@ -53,12 +57,14 @@ make(
     name = "mul",
     lib_source = "//foreign_cc/make_mul:all_srcs",
     out_static_libs = ["libmul.a"],
+    tags = ["heavy"],
 )
 
 cc_test(
     name = "mul_test",
     size = "small",
     srcs = ["mul_test.c"],
+    tags = ["heavy"],
     deps = [":mul"],
 )
 

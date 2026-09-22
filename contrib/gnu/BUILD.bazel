@@ -7,6 +7,7 @@ genrule(
     srcs = ["numbers.txt"],
     outs = ["sum.txt"],
     cmd = "$(execpath @gawk//:gawk) '{ s += $$1 } END { print s }' $(execpath numbers.txt) > $@",
+    tags = ["heavy"],
     tools = ["@gawk"],
 )
 
@@ -14,6 +15,7 @@ diff_test(
     name = "gawk_test",
     file1 = ":sum",
     file2 = "sum.expected.txt",
+    tags = ["heavy"],
 )
 
 genrule(
@@ -21,6 +23,7 @@ genrule(
     srcs = ["hello.m4"],
     outs = ["hello.txt"],
     cmd = "$(execpath @m4//:m4) -D NAME=world $(execpath hello.m4) > $@",
+    tags = ["heavy"],
     tools = ["@m4"],
 )
 
@@ -28,6 +31,7 @@ diff_test(
     name = "m4_test",
     file1 = ":hello",
     file2 = "hello.expected.txt",
+    tags = ["heavy"],
 )
 
 # Lets //buildifier:buildifier_test lint this file hermetically.

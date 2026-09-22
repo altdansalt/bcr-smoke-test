@@ -6,11 +6,24 @@ load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
+HEAVY_LIBS = [
+    "abseil",
+    "boringssl",
+    "c_ares",
+    "curl",
+    "freetype",
+    "mbedtls",
+    "openssl",
+    "re2",
+]
+
 [
     cc_test(
         name = name + "_test",
         size = "small",
         srcs = [name + "_test.cc"],
+        # Libraries that take minutes to compile are only built with --config=full.
+        tags = ["heavy"] if name in HEAVY_LIBS else [],
         deps = deps + ["@googletest//:gtest_main"],
     )
     for name, deps in {
@@ -67,6 +80,7 @@ cc_test(
 cc_binary(
     name = "compress_tool",
     srcs = ["compress_tool.cc"],
+    tags = ["heavy"],
     deps = [
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",

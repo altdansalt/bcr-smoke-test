@@ -21,6 +21,7 @@ java_test(
     name = "GreeterServiceTest",
     size = "small",
     srcs = ["GreeterServiceTest.java"],
+    tags = ["heavy"],
     deps = [
         "//jvm:greeter_java_grpc",
         "//jvm:greeter_java_proto",

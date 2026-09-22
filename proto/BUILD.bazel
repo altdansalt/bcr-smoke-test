@@ -16,6 +16,7 @@ proto_library(
 
 cc_proto_library(
     name = "greeting_cc_proto",
+    tags = ["heavy"],
     deps = [":greeting_proto"],
 )
 
@@ -28,6 +29,7 @@ legacy_proto_library(
 
 cc_proto_library(
     name = "legacy_cc_proto",
+    tags = ["heavy"],
     deps = [":legacy_proto"],
 )
 
@@ -35,6 +37,7 @@ cc_test(
     name = "greeting_test",
     size = "small",
     srcs = ["greeting_test.cc"],
+    tags = ["heavy"],
     deps = [
         ":greeting_cc_proto",
         ":legacy_cc_proto",

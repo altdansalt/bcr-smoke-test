@@ -1,3 +1,11 @@
+# Two tiers: the default `bazel build //...` / `bazel test //...` skips targets tagged "heavy"
+# (gRPC C++, C++ protobuf runtime, OpenSSL/BoringSSL/curl, crate_universe, Kotlin, GNU make from
+# source, ...) so a cold run stays in the low minutes. `--config=full` builds and tests everything.
+build --build_tag_filters=-heavy
+test --test_tag_filters=-heavy
+build:full --build_tag_filters=
+test:full --test_tag_filters=
+
 # Keep the workspace hermetic-ish and quiet.
 common --enable_bzlmod
 common --noenable_workspace
