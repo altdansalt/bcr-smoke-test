@@ -1,0 +1,65 @@
+# apple_support / rules_swift / rules_apple smoke. These only build on macOS with
+# Xcode, so every target is gated with target_compatible_with; on Linux
+# `bazel build //...` skips them (see --skip_incompatible_explicit_targets).
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@rules_apple//apple:macos.bzl", "macos_command_line_application")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_swift//swift:swift_binary.bzl", "swift_binary")
+load("@rules_swift//swift:swift_library.bzl", "swift_library")
+load("@rules_swift//swift:swift_test.bzl", "swift_test")
+
+package(default_visibility = ["//visibility:public"])
+
+MACOS_ONLY = ["@platforms//os:macos"]
+
+swift_library(
+    name = "greeter",
+    srcs = ["Greeter.swift"],
+    module_name = "Greeter",
+    target_compatible_with = MACOS_ONLY,
+)
+
+swift_test(
+    name = "greeter_test",
+    srcs = ["GreeterTests.swift"],
+    target_compatible_with = MACOS_ONLY,
+    deps = [":greeter"],
+)
+
+swift_binary(
+    name = "hello_swift",
+    srcs = ["main.swift"],
+    target_compatible_with = MACOS_ONLY,
+    deps = [":greeter"],
+)
+
+# apple_support: Objective-C compiled through the Apple cc toolchain.
+cc_library(
+    name = "objc_greeter",
+    srcs = ["ObjcGreeter.m"],
+    hdrs = ["ObjcGreeter.h"],
+    target_compatible_with = MACOS_ONLY,
+)
+
+# rules_apple bundling rules require a macOS *execution* platform, which makes
+# toolchain resolution fail on Linux before target_compatible_with is checked.
+# So this target is `manual` and only reached through the macOS-only build_test.
+macos_command_line_application(
+    name = "hello_macos",
+    bundle_id = "dev.bcr-smoke.hello",
+    minimum_os_version = "13.0",
+    tags = ["manual"],
+    target_compatible_with = MACOS_ONLY,
+    deps = [":hello_swift"],
+)
+
+build_test(
+    name = "apple_build_test",
+    targets = [
+        ":greeter",
+        ":hello_swift",
+        ":objc_greeter",
+        ":hello_macos",
+    ],
+    target_compatible_with = MACOS_ONLY,
+)
