@@ -1,0 +1,36 @@
+# rules_java: java_library + java_binary consuming Maven artifacts (@maven//...),
+# generated protobuf messages and a grpc-java service stub.
+load("@rules_java//java:java_binary.bzl", "java_binary")
+load("@rules_java//java:java_library.bzl", "java_library")
+
+package(default_visibility = ["//jvm:__subpackages__"])
+
+java_library(
+    name = "greeter",
+    srcs = ["Greeter.java"],
+    deps = [
+        "//jvm:greeter_java_proto",
+        "@maven//:com_google_code_gson_gson",
+        "@maven//:com_google_guava_guava",
+        "@protobuf//:protobuf_java",
+    ],
+)
+
+java_library(
+    name = "greeter_service",
+    srcs = ["GreeterService.java"],
+    deps = [
+        ":greeter",
+        "//jvm:greeter_java_grpc",
+        "//jvm:greeter_java_proto",
+        "@grpc-java//api",
+        "@grpc-java//stub",
+    ],
+)
+
+java_binary(
+    name = "hello",
+    srcs = ["Hello.java"],
+    main_class = "com.example.greeter.Hello",
+    deps = [":greeter"],
+)

@@ -1,0 +1,29 @@
+# Protobuf + gRPC codegen for Java: proto_library -> java_proto_library /
+# java_lite_proto_library (protobuf) -> java_grpc_library (grpc-java).
+load("@grpc-java//:java_grpc_library.bzl", "java_grpc_library")
+load("@protobuf//bazel:java_lite_proto_library.bzl", "java_lite_proto_library")
+load("@protobuf//bazel:java_proto_library.bzl", "java_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+
+package(default_visibility = ["//jvm:__subpackages__"])
+
+proto_library(
+    name = "greeter_proto",
+    srcs = ["greeter.proto"],
+)
+
+java_proto_library(
+    name = "greeter_java_proto",
+    deps = [":greeter_proto"],
+)
+
+java_lite_proto_library(
+    name = "greeter_java_proto_lite",
+    deps = [":greeter_proto"],
+)
+
+java_grpc_library(
+    name = "greeter_java_grpc",
+    srcs = [":greeter_proto"],
+    deps = [":greeter_java_proto"],
+)

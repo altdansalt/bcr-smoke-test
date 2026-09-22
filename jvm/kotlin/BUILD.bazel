@@ -1,0 +1,28 @@
+# rules_kotlin: kt_jvm_library (depending on a java_library), kt_jvm_binary and
+# kt_jvm_test (JUnit 4 from @maven). The default Kotlin toolchain is registered
+# by rules_kotlin's own MODULE.bazel, so nothing is registered here.
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_library", "kt_jvm_test")
+
+kt_jvm_library(
+    name = "shout",
+    srcs = ["Shout.kt"],
+    deps = ["//jvm/java/com/example/greeter"],
+)
+
+kt_jvm_binary(
+    name = "shout_bin",
+    srcs = ["Main.kt"],
+    main_class = "com.example.shout.MainKt",
+    deps = [":shout"],
+)
+
+kt_jvm_test(
+    name = "ShoutTest",
+    size = "small",
+    srcs = ["ShoutTest.kt"],
+    test_class = "com.example.shout.ShoutTest",
+    deps = [
+        ":shout",
+        "@maven//:junit_junit",
+    ],
+)

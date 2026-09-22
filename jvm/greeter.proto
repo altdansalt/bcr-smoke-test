@@ -1,0 +1,20 @@
+// Message + service definitions exercised by java_proto_library,
+// java_lite_proto_library and java_grpc_library.
+syntax = "proto3";
+
+package bcr_smoke.jvm;
+
+option java_multiple_files = true;
+option java_package = "com.example.greeter.proto";
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloReply {
+  string message = 1;
+}
+
+service Greeter {
+  rpc SayHello(HelloRequest) returns (HelloReply) {}
+}

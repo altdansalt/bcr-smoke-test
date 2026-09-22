@@ -1,0 +1,47 @@
+# rules_java java_test with JUnit 4 (the JUnit jars come from @maven; Bazel's
+# built-in BazelTestRunner is used, so no runner dep is needed). The test class
+# is inferred from the javatests/ path root; the lite-proto test shows the
+# explicit test_class form.
+load("@rules_java//java:java_test.bzl", "java_test")
+
+java_test(
+    name = "GreeterTest",
+    size = "small",
+    srcs = ["GreeterTest.java"],
+    deps = [
+        "//jvm:greeter_java_proto",
+        "//jvm/java/com/example/greeter",
+        "@maven//:junit_junit",
+        "@maven//:org_hamcrest_hamcrest",
+    ],
+)
+
+# In-process gRPC server + unary call over the generated blocking stub.
+java_test(
+    name = "GreeterServiceTest",
+    size = "small",
+    srcs = ["GreeterServiceTest.java"],
+    deps = [
+        "//jvm:greeter_java_grpc",
+        "//jvm:greeter_java_proto",
+        "//jvm/java/com/example/greeter:greeter_service",
+        "@grpc-java//api",
+        "@grpc-java//inprocess",
+        "@grpc-java//testing",
+        "@maven//:junit_junit",
+    ],
+)
+
+# java_lite_proto_library: lite messages share class names with the full ones,
+# so this test deliberately depends only on the lite flavour.
+java_test(
+    name = "greeter_lite_test",
+    size = "small",
+    srcs = ["GreeterLiteTest.java"],
+    test_class = "com.example.greeter.GreeterLiteTest",
+    deps = [
+        "//jvm:greeter_java_proto_lite",
+        "@maven//:junit_junit",
+        "@protobuf//:protobuf_javalite",
+    ],
+)
