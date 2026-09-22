@@ -1,0 +1,25 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "greeter",
+    srcs = ["greeter.go"],
+    importpath = "github.com/bcr-smoke-test/bcr-smoke-test/go/greeter",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_google_uuid//:uuid"],
+)
+
+go_test(
+    name = "greeter_test",
+    size = "small",
+    srcs = [
+        "greeter_internal_test.go",
+        "greeter_test.go",
+    ],
+    embed = [":greeter"],
+    deps = [
+        "//go/greetingpb",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_stretchr_testify//require",
+        "@org_golang_google_protobuf//proto",
+    ],
+)

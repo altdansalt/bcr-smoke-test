@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package bcr_smoke_test.greeting;
+
+option go_package = "github.com/bcr-smoke-test/bcr-smoke-test/go/greetingpb";
+
+// Greeting is a tiny message compiled with go_proto_library.
+message Greeting {
+  string name = 1;
+  string message = 2;
+}

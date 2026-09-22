@@ -1,0 +1,25 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "hello_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/bcr-smoke-test/bcr-smoke-test/go/cmd/hello",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/greeter",
+        "//go/greetingpb",
+    ],
+)
+
+go_binary(
+    name = "hello",
+    embed = [":hello_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "hello_test",
+    size = "small",
+    srcs = ["main_test.go"],
+    embed = [":hello_lib"],
+)
