@@ -37,6 +37,6 @@ for i, r in enumerate(rows, 1):
 table = "\n".join(lines)
 readme = root / "README.md"
 text = readme.read_text()
-new = re.sub(r"(<!-- table:start -->\n).*?(\n<!-- table:end -->)", lambda mm: mm.group(1) + table + mm.group(2), text, flags=re.S)
+new = re.sub(r"(<!-- table:start -->\n)(?:.*?\n)?(<!-- table:end -->)", lambda mm: mm.group(1) + table + "\n" + mm.group(2), text, flags=re.S)
 readme.write_text(new)
 print(f"wrote table with {len(rows)} rows")
