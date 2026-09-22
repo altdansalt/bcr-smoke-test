@@ -1,0 +1,17 @@
+# download_utils 1.2.3 smoke: download_file (MODULE.bazel) fetches a single file with an
+# integrity hash; the repo exposes it via exports_files. The shfmt binaries used by
+# //contrib/toolchain_utils are fetched the same way.
+load("@bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@bazel_lib//lib:testing.bzl", "assert_contains")
+
+copy_file(
+    name = "skylib_license",
+    src = "@contrib_skylib_license//:LICENSE",
+    out = "skylib-LICENSE.txt",
+)
+
+assert_contains(
+    name = "license_test",
+    actual = ":skylib_license",
+    expected = "Apache License",
+)

@@ -1,0 +1,44 @@
+# jq.bzl 0.6.2 smoke: the jq rule (merge with --slurp), jq_test (semantic compare) and
+# $(JQ_BIN) from the resolved toolchain inside a genrule.
+# Patterns follow https://github.com/bazel-contrib/jq.bzl (Apache-2.0) jq/tests/BUILD.bazel.
+load("@bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@jq.bzl", "jq")
+load("@jq.bzl//jq:jq.bzl", "jq_test")
+
+jq(
+    name = "merged",
+    srcs = [
+        "a.json",
+        "b.json",
+    ],
+    out = "merged.json",
+    args = ["--slurp"],
+    filter = ".[0] * .[1]",
+)
+
+diff_test(
+    name = "merged_test",
+    file1 = ":merged",
+    file2 = "merged.expected.json",
+)
+
+# Same JSON content, different formatting/key order.
+jq_test(
+    name = "semantic_equal_test",
+    file1 = "a.json",
+    file2 = "a_compact.json",
+)
+
+genrule(
+    name = "keys",
+    srcs = ["a.json"],
+    outs = ["keys.txt"],
+    cmd = "$(JQ_BIN) -r 'keys[]' $(execpath a.json) > $@",
+    toolchains = ["@jq_toolchains//:resolved_toolchain"],
+)
+
+diff_test(
+    name = "genrule_test",
+    file1 = ":keys",
+    file2 = "keys.expected.txt",
+)

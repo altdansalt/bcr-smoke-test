@@ -195,3 +195,65 @@ maven.install(
 )
 use_repo(maven, "maven")
 # --- end jvm ---
+
+# --- contrib ---
+# jq.bzl / tar.bzl register their toolchains themselves; expose the hub repos so genrules
+# can use $(JQ_BIN) / $(BSDTAR_BIN) via @jq_toolchains//:resolved_toolchain etc.
+jq_toolchains = use_extension("@jq.bzl//jq:extensions.bzl", "toolchains")
+use_repo(jq_toolchains, "jq_toolchains")
+
+tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
+use_repo(tar_toolchains, "bsd_tar_toolchains")
+
+# rules_multitool: one hub with jq (linux/macos x x86_64/arm64) from the committed lockfile.
+multitool = use_extension("@rules_multitool//multitool:extension.bzl", "multitool")
+multitool.hub(lockfile = "//contrib/multitool:multitool.lock.json")
+use_repo(multitool, "multitool")
+
+register_toolchains("@multitool//toolchains:all")
+
+# download_utils: single-file downloads with subresource integrity.
+download_file = use_repo_rule("@download_utils//download/file:defs.bzl", "download_file")
+
+download_file(
+    name = "contrib_skylib_license",
+    integrity = "sha256-z8d0m5b2O9McPEK1xHG/dWgUBT6EfBDz6wA0F7xSPTA=",
+    output = "LICENSE",
+    urls = ["https://raw.githubusercontent.com/bazelbuild/bazel-skylib/1.9.2/LICENSE"],
+)
+
+# shfmt binaries, one per execution platform, registered as toolchains in //contrib/toolchain_utils.
+[
+    download_file(
+        name = "contrib_shfmt_{}".format(triplet),
+        executable = True,
+        integrity = integrity,
+        output = "shfmt",
+        urls = ["https://github.com/mvdan/sh/releases/download/v3.11.0/shfmt_v3.11.0_{}".format(asset)],
+    )
+    for triplet, asset, integrity in [
+        ("amd64-linux", "linux_amd64", "sha256-GQTsa6xxXB0FzX9mEu7I9npiXDdJyzJ+W/tBJ9CQNf8="),
+        ("arm64-linux", "linux_arm64", "sha256-s5dhIXEP1LEr9kGwp/smhtpZj7DanxSMZBthtUz6NAc="),
+        ("amd64-macos", "darwin_amd64", "sha256-gQp2y3x4NR4CHIAl80SxIUnYQmzlFgmhea9oEJ7VaY4="),
+        ("arm64-macos", "darwin_arm64", "sha256-ryBtI03/XQXZrDVVKbKzOnp44T+rm1nbd3dGqrPnJTA="),
+    ]
+]
+
+# toolchain_utils: repos exposing the resolved toolchain as a Make variable (TemplateVariableInfo).
+toolchain_resolved = use_repo_rule("@toolchain_utils//toolchain/resolved:defs.bzl", "toolchain_resolved")
+
+toolchain_resolved(
+    name = "contrib_resolved_shfmt",
+    toolchain_type = "//contrib/toolchain_utils:type",
+)
+
+toolchain_resolved(
+    name = "contrib_resolved_ape_jq",
+    toolchain_type = "//contrib/ape:type",
+)
+
+register_toolchains(
+    "//contrib/ape:all",
+    "//contrib/toolchain_utils:all",
+)
+# --- end contrib ---

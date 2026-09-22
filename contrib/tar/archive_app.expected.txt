@@ -1,0 +1,5 @@
+drwxr-xr-x  0 app    0           0 Jan  1  2000 opt/
+drwxr-xr-x  0 app    0           0 Jan  1  2000 opt/app/
+-rwxr-xr-x  0 1000   0           6 Jan  1  2000 opt/app/hello.txt
+drwxr-xr-x  0 1000   0           0 Jan  1  2000 opt/app/sub/
+-rwxr-xr-x  0 1000   0           6 Jan  1  2000 opt/app/sub/world.txt

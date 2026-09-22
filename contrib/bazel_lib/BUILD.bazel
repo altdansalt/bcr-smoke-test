@@ -1,0 +1,77 @@
+# bazel_lib 3.7.2 smoke (the renamed successor of aspect_bazel_lib; both coexist in this repo).
+# Exercises copy_directory, copy_to_directory, copy_to_bin, expand_template, write_source_file,
+# the testing.bzl asserts and bats_test.
+# Patterns follow https://github.com/bazel-contrib/bazel-lib (Apache-2.0) docs and lib/tests.
+load("@bazel_lib//lib:bats.bzl", "bats_test")
+load("@bazel_lib//lib:copy_directory.bzl", "copy_directory")
+load("@bazel_lib//lib:copy_to_bin.bzl", "copy_to_bin")
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@bazel_lib//lib:expand_template.bzl", "expand_template")
+load("@bazel_lib//lib:testing.bzl", "assert_contains", "assert_directory_contains", "assert_outputs")
+load("@bazel_lib//lib:write_source_files.bzl", "write_source_file")
+
+copy_to_directory(
+    name = "srcdir",
+    srcs = [
+        "a.txt",
+        "nested/b.txt",
+    ],
+)
+
+copy_directory(
+    name = "copied_dir",
+    src = ":srcdir",
+    out = "copied_dir",
+)
+
+assert_directory_contains(
+    name = "copy_directory_test",
+    directory = ":copied_dir",
+    expected = [
+        "a.txt",
+        "nested/b.txt",
+    ],
+)
+
+copy_to_bin(
+    name = "a_in_bin",
+    srcs = ["a.txt"],
+)
+
+assert_outputs(
+    name = "copy_to_bin_test",
+    actual = ":a_in_bin",
+    expected = ["contrib/bazel_lib/a.txt"],
+)
+
+# Inline template (list of lines) rather than a template file.
+expand_template(
+    name = "version_h",
+    out = "version.h",
+    substitutions = {"{{VERSION}}": "3.7.2"},
+    template = [
+        "#define BAZEL_LIB_VERSION \"{{VERSION}}\"",
+        "",
+    ],
+)
+
+assert_contains(
+    name = "expand_template_test",
+    actual = ":version_h",
+    expected = "#define BAZEL_LIB_VERSION \"3.7.2\"",
+)
+
+# Singular write_source_file; generates :write_version_h_test against the committed file.
+write_source_file(
+    name = "write_version_h",
+    in_file = ":version_h",
+    out_file = "version.generated.h",
+)
+
+bats_test(
+    name = "bats_smoke_test",
+    size = "small",
+    srcs = ["smoke.bats"],
+    data = ["a.txt"],
+    env = {"A_TXT": "$(rootpath a.txt)"},
+)

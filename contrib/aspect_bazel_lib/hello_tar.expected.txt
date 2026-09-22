@@ -1,0 +1,3 @@
+contrib/
+contrib/aspect_bazel_lib/
+contrib/aspect_bazel_lib/hello.txt

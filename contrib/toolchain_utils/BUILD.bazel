@@ -1,0 +1,69 @@
+# toolchain_utils 1.3.0 smoke: register shfmt binaries fetched with download_utils'
+# download_file (see MODULE.bazel) as a toolchain per execution platform, resolve it with
+# toolchain_resolved, then use it via toolchain_test and the $(SHFMT) Make variable.
+# Pattern follows the "Register downloaded binaries" section of
+# https://gitlab.arm.com/bazel/toolchain_utils README (MIT).
+load("@bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@toolchain_utils//toolchain/info:defs.bzl", "toolchain_info")
+load("@toolchain_utils//toolchain/test:defs.bzl", "toolchain_test")
+
+toolchain_type(
+    name = "type",
+    visibility = ["//visibility:public"],
+)
+
+PLATFORMS = {
+    "amd64-linux": ("amd64", "linux"),
+    "arm64-linux": ("arm64", "linux"),
+    "amd64-macos": ("amd64", "macos"),
+    "arm64-macos": ("arm64", "macos"),
+}
+
+[
+    toolchain_info(
+        name = "info-" + triplet,
+        target = "@contrib_shfmt_{}//:shfmt".format(triplet),
+        variable = "SHFMT",
+    )
+    for triplet in PLATFORMS
+]
+
+[
+    toolchain(
+        name = triplet,
+        exec_compatible_with = [
+            "@toolchain_utils//toolchain/constraint/cpu:" + cpu,
+            "@toolchain_utils//toolchain/constraint/os:" + os,
+        ],
+        toolchain = ":info-" + triplet,
+        toolchain_type = ":type",
+    )
+    for triplet, (cpu, os) in PLATFORMS.items()
+]
+
+alias(
+    name = "resolved",
+    actual = "@contrib_resolved_shfmt",
+)
+
+toolchain_test(
+    name = "shfmt_version_test",
+    size = "small",
+    args = ["--version"],
+    stdout = "version.expected.txt",
+    toolchains = [":resolved"],
+)
+
+genrule(
+    name = "pretty",
+    srcs = ["ugly.sh"],
+    outs = ["pretty.sh"],
+    cmd = "$(SHFMT) -i 2 $(execpath ugly.sh) > $@",
+    toolchains = [":resolved"],
+)
+
+diff_test(
+    name = "shfmt_format_test",
+    file1 = ":pretty",
+    file2 = "pretty.expected.sh",
+)

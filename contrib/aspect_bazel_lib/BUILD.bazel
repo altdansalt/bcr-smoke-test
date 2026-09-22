@@ -1,0 +1,167 @@
+# aspect_bazel_lib 2.22.5 smoke: the most-used helpers (copy_file, copy_to_directory,
+# directory_path, expand_template, run_binary, params_file, write_source_files, diff_test)
+# plus the jq/yq/tar re-exports that most existing users still load from @aspect_bazel_lib.
+# Patterns follow https://github.com/bazel-contrib/bazel-lib (Apache-2.0) docs and lib/tests.
+load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@aspect_bazel_lib//lib:directory_path.bzl", "directory_path")
+load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
+load("@aspect_bazel_lib//lib:jq.bzl", "jq")
+load("@aspect_bazel_lib//lib:params_file.bzl", "params_file")
+load("@aspect_bazel_lib//lib:run_binary.bzl", "run_binary")
+load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
+load("@aspect_bazel_lib//lib:yq.bzl", "yq")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+
+# copy_file
+copy_file(
+    name = "copy_hello",
+    src = "hello.txt",
+    out = "copied/hello.txt",
+)
+
+diff_test(
+    name = "copy_file_test",
+    file1 = "hello.txt",
+    file2 = ":copy_hello",
+)
+
+# copy_to_directory -> TreeArtifact, then directory_path + copy_file to pull one file back out.
+copy_to_directory(
+    name = "bundle",
+    srcs = [
+        "data/world.txt",
+        "hello.txt",
+    ],
+)
+
+directory_path(
+    name = "bundle_world",
+    directory = ":bundle",
+    path = "data/world.txt",
+)
+
+copy_file(
+    name = "world_from_bundle",
+    src = ":bundle_world",
+    out = "world_from_bundle.txt",
+)
+
+diff_test(
+    name = "directory_path_test",
+    file1 = "data/world.txt",
+    file2 = ":world_from_bundle",
+)
+
+# expand_template + write_source_files (the committed greeting.generated.txt must stay in sync).
+expand_template(
+    name = "greeting",
+    out = "greeting.txt",
+    substitutions = {
+        "{{LIB}}": "aspect_bazel_lib 2.22.5",
+        "{{NAME}}": "bcr-smoke-test",
+    },
+    template = "greeting.tmpl",
+)
+
+diff_test(
+    name = "expand_template_test",
+    file1 = ":greeting",
+    file2 = "greeting.expected.txt",
+)
+
+write_source_files(
+    name = "write_greeting",
+    files = {
+        "greeting.generated.txt": ":greeting",
+    },
+)
+
+# run_binary: run a *_binary as a build action without a shell wrapper.
+sh_binary(
+    name = "shout",
+    srcs = ["shout.sh"],
+)
+
+run_binary(
+    name = "shouted",
+    srcs = ["hello.txt"],
+    outs = ["shouted.txt"],
+    args = [
+        "$(execpath hello.txt)",
+        "$(execpath shouted.txt)",
+    ],
+    tool = ":shout",
+)
+
+diff_test(
+    name = "run_binary_test",
+    file1 = ":shouted",
+    file2 = "shouted.expected.txt",
+)
+
+# params_file with $(rootpath) expansion.
+params_file(
+    name = "params",
+    out = "params.txt",
+    args = [
+        "--input",
+        "$(rootpath hello.txt)",
+        "--mode",
+        "smoke",
+    ],
+    data = ["hello.txt"],
+)
+
+diff_test(
+    name = "params_file_test",
+    file1 = ":params",
+    file2 = "params.expected.txt",
+)
+
+# jq / yq / tar via the @aspect_bazel_lib re-exports (backed by jq.bzl / yq.bzl / tar.bzl).
+jq(
+    name = "pkg_no_dev_deps",
+    srcs = ["pkg.json"],
+    filter = "del(.devDependencies)",
+)
+
+diff_test(
+    name = "jq_test",
+    file1 = ":pkg_no_dev_deps",
+    file2 = "pkg.expected.json",
+)
+
+yq(
+    name = "pkg_yaml",
+    srcs = ["pkg.json"],
+    outs = ["pkg.yaml"],
+    args = ["-o=yaml"],
+)
+
+diff_test(
+    name = "yq_test",
+    file1 = ":pkg_yaml",
+    file2 = "pkg.expected.yaml",
+)
+
+tar(
+    name = "hello_tar",
+    srcs = ["hello.txt"],
+)
+
+genrule(
+    name = "hello_tar_listing",
+    srcs = [":hello_tar"],
+    outs = ["hello_tar.listing.txt"],
+    cmd = "$(BSDTAR_BIN) --list --file $(execpath :hello_tar) > $@",
+    toolchains = ["@bsd_tar_toolchains//:resolved_toolchain"],
+)
+
+diff_test(
+    name = "tar_test",
+    file1 = ":hello_tar_listing",
+    file2 = "hello_tar.expected.txt",
+)

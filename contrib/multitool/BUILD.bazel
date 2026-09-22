@@ -1,0 +1,25 @@
+# rules_multitool 1.11.1 smoke: @multitool//tools/jq resolves (via toolchains) to the
+# matching os/cpu binary from multitool.lock.json; used as a genrule tool and in an sh_test.
+load("@bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+genrule(
+    name = "jq_version",
+    outs = ["version.txt"],
+    cmd = "$(execpath @multitool//tools/jq) --version > $@",
+    tools = ["@multitool//tools/jq"],
+)
+
+diff_test(
+    name = "jq_version_test",
+    file1 = ":jq_version",
+    file2 = "version.expected.txt",
+)
+
+sh_test(
+    name = "jq_runfiles_test",
+    size = "small",
+    srcs = ["version_test.sh"],
+    args = ["$(rootpath @multitool//tools/jq)"],
+    data = ["@multitool//tools/jq"],
+)

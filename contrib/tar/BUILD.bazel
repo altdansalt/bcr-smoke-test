@@ -1,0 +1,69 @@
+# tar.bzl 0.10.9 smoke: tar with mutate(), explicit mtree_spec + mtree_mutate, gzip compression.
+# Archive listings are produced with the hermetic bsdtar toolchain and diff-tested.
+# Patterns follow https://github.com/bazel-contrib/tar.bzl (Apache-2.0) tar/tests/BUILD.
+load("@bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@tar.bzl", "mtree_mutate", "mtree_spec", "mutate", "tar")
+
+SRCS = [
+    "hello.txt",
+    "sub/world.txt",
+]
+
+# Most common form: auto mtree + a mutate() to strip the package prefix and fix mtime.
+tar(
+    name = "archive",
+    srcs = SRCS,
+    mutate = mutate(
+        mtime = 946699200,  # 2000-01-01 UTC
+        strip_prefix = package_name(),
+    ),
+)
+
+# Explicit manifest pipeline: mtree_spec -> mtree_mutate -> tar(mtree = ...).
+mtree_spec(
+    name = "spec",
+    srcs = SRCS,
+)
+
+mtree_mutate(
+    name = "spec_app",
+    mtime = 946699200,
+    mtree = ":spec",
+    owner = "1000",
+    ownername = "app",
+    package_dir = "opt/app",
+    strip_prefix = package_name(),
+)
+
+tar(
+    name = "archive_app",
+    srcs = SRCS,
+    compress = "gzip",
+    mtree = ":spec_app",
+)
+
+[
+    genrule(
+        name = "{}_listing".format(name),
+        srcs = [":" + name],
+        outs = ["{}.listing.txt".format(name)],
+        cmd = "TZ=UTC $(BSDTAR_BIN) --list --verbose --file $(execpath :{}) > $@".format(name),
+        toolchains = ["@bsd_tar_toolchains//:resolved_toolchain"],
+    )
+    for name in [
+        "archive",
+        "archive_app",
+    ]
+]
+
+diff_test(
+    name = "archive_test",
+    file1 = ":archive_listing",
+    file2 = "archive.expected.txt",
+)
+
+diff_test(
+    name = "archive_app_test",
+    file1 = ":archive_app_listing",
+    file2 = "archive_app.expected.txt",
+)

@@ -1,0 +1,4 @@
+--input
+contrib/aspect_bazel_lib/hello.txt
+--mode
+smoke

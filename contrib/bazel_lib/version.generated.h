@@ -1,0 +1,1 @@
+#define BAZEL_LIB_VERSION "3.7.2"

@@ -1,0 +1,36 @@
+# yq.bzl 0.4.0 smoke: yq rule (delete a key; YAML -> JSON conversion) and yq_test.
+# Patterns follow https://github.com/bazel-contrib/yq.bzl (Apache-2.0) docs and tests.
+load("@bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@yq.bzl", "yq", "yq_test")
+
+yq(
+    name = "safe_config",
+    srcs = ["config.yaml"],
+    expression = "del(.credentials)",
+)
+
+diff_test(
+    name = "safe_config_test",
+    file1 = ":safe_config",
+    file2 = "safe_config.expected.yaml",
+)
+
+yq(
+    name = "config_json",
+    srcs = ["config.yaml"],
+    outs = ["config.json"],
+    args = ["-o=json"],
+)
+
+diff_test(
+    name = "config_json_test",
+    file1 = ":config_json",
+    file2 = "config.expected.json",
+)
+
+# Same document, different key order and flow style.
+yq_test(
+    name = "semantic_equal_test",
+    file1 = "config.yaml",
+    file2 = "reordered.yaml",
+)

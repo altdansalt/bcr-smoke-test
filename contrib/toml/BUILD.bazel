@@ -1,0 +1,29 @@
+# toml.bzl 0.4.1 smoke: it is a pure-Starlark library (no rules), so the decode/encode
+# results computed in config.bzl are materialized with write_file and diff-tested.
+load("@bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load(":config.bzl", "DECODED_LINES", "ENCODED")
+
+write_file(
+    name = "decoded",
+    out = "decoded.txt",
+    content = DECODED_LINES,
+)
+
+diff_test(
+    name = "decode_test",
+    file1 = ":decoded",
+    file2 = "decoded.expected.txt",
+)
+
+write_file(
+    name = "encoded",
+    out = "encoded.toml",
+    content = [ENCODED],
+)
+
+diff_test(
+    name = "encode_test",
+    file1 = ":encoded",
+    file2 = "encoded.expected.toml",
+)

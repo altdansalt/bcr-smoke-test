@@ -1,0 +1,31 @@
+# gawk 5.4.0.bcr.1 and m4 1.4.21.bcr.4 smoke: both BCR modules build the GNU tool from
+# source with rules_cc; use the binaries as genrule tools and diff-test their output.
+load("@bazel_lib//lib:diff_test.bzl", "diff_test")
+
+genrule(
+    name = "sum",
+    srcs = ["numbers.txt"],
+    outs = ["sum.txt"],
+    cmd = "$(execpath @gawk//:gawk) '{ s += $$1 } END { print s }' $(execpath numbers.txt) > $@",
+    tools = ["@gawk"],
+)
+
+diff_test(
+    name = "gawk_test",
+    file1 = ":sum",
+    file2 = "sum.expected.txt",
+)
+
+genrule(
+    name = "hello",
+    srcs = ["hello.m4"],
+    outs = ["hello.txt"],
+    cmd = "$(execpath @m4//:m4) -D NAME=world $(execpath hello.m4) > $@",
+    tools = ["@m4"],
+)
+
+diff_test(
+    name = "m4_test",
+    file1 = ":hello",
+    file2 = "hello.expected.txt",
+)

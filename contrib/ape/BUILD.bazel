@@ -1,0 +1,55 @@
+# ape 1.1.1-alpha.1 smoke: register the APE (Cosmopolitan) jq binary as a toolchain,
+# resolve it through toolchain_utils, and use it in toolchain_test and a genrule.
+# Pattern copied and slimmed from https://gitlab.arm.com/bazel/ape e2e/toolchain/curl/BUILD.bazel (MIT).
+load("@ape//ape/toolchain:defs.bzl", "ape_toolchain")
+load("@bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:native_binary.bzl", "native_test")
+load("@toolchain_utils//toolchain/test:defs.bzl", "toolchain_test")
+
+toolchain_type(
+    name = "type",
+    visibility = ["//visibility:public"],
+)
+
+# Registers one toolchain per supported (cpu, os) pair; see register_toolchains in MODULE.bazel.
+ape_toolchain(
+    name = "ape",
+    toolchain = "@ape//ape/toolchain/info:jq",
+    toolchain_type = ":type",
+)
+
+# Provides TemplateVariableInfo ($(JQ)) for the resolved toolchain (repo rule in MODULE.bazel).
+alias(
+    name = "resolved",
+    actual = "@contrib_resolved_ape_jq",
+)
+
+toolchain_test(
+    name = "jq_version_test",
+    size = "small",
+    args = ["--version"],
+    toolchains = [":resolved"],
+)
+
+genrule(
+    name = "name",
+    srcs = ["input.json"],
+    outs = ["name.txt"],
+    cmd = "$(JQ) -r .name $(execpath input.json) > $@",
+    toolchains = [":resolved"],
+)
+
+diff_test(
+    name = "genrule_test",
+    file1 = ":name",
+    file2 = "name.expected.txt",
+)
+
+# Binaries are also plain executable targets: `bazel run @ape//ape:jq`.
+native_test(
+    name = "jq_binary_test",
+    size = "small",
+    src = "@ape//ape:jq",
+    out = "jq",
+    args = ["--version"],
+)
