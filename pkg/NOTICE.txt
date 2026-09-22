@@ -1,0 +1,1 @@
+Packaged by rules_pkg as part of the bcr-smoke-test repository.

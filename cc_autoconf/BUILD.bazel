@@ -1,0 +1,49 @@
+# rules_cc_autoconf smoke: run autoconf-style checks (AC_CHECK_FUNCS /
+# AC_CHECK_HEADERS) against the configured cc_toolchain, render config.h from
+# config.h.in with autoconf_hdr, and compile a cc_test against it.
+# Slimmed from rules_cc_autoconf examples/simple
+# (https://github.com/periareon/rules_cc_autoconf, MIT).
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_cc_autoconf//autoconf:autoconf.bzl", "autoconf")
+load("@rules_cc_autoconf//autoconf:autoconf_hdr.bzl", "autoconf_hdr")
+load("@rules_cc_autoconf//autoconf:checks.bzl", "macros")
+load("@rules_cc_autoconf//autoconf:package_info.bzl", "package_info")
+
+# PACKAGE_NAME / PACKAGE_VERSION for config.h. (package_info can also parse
+# them from a MODULE.bazel via `module_bazel = "//:MODULE.bazel"`, which needs
+# an exports_files() in the root BUILD file.)
+package_info(
+    name = "package",
+    package_name = "bcr_smoke_test",
+    package_version = "0.1.0",
+)
+
+autoconf(
+    name = "autoconf",
+    checks = macros.AC_CHECK_FUNCS([
+        "malloc",
+        "free",
+    ]) + macros.AC_CHECK_HEADERS([
+        "stdio.h",
+        "stdlib.h",
+        "string.h",
+        "this_header_does_not_exist.h",
+    ]),
+    deps = [":package"],
+)
+
+autoconf_hdr(
+    name = "config",
+    out = "config.h",
+    template = "config.h.in",
+    deps = [":autoconf"],
+)
+
+cc_test(
+    name = "config_test",
+    size = "small",
+    srcs = [
+        "config_test.c",
+        ":config.h",
+    ],
+)

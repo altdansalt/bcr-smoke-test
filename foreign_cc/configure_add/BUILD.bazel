@@ -1,0 +1,7 @@
+# Source tree of a tiny autotools-style project (hand-written `configure`
+# script + Makefile.in, so no host autoconf/automake is needed).
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//foreign_cc:__pkg__"],
+)

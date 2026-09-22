@@ -165,3 +165,10 @@ use_repo(
     "org_golang_google_protobuf",
 )
 # --- end go ---
+
+# --- native ---
+# rules_foreign_cc, rules_pkg, rules_perl, rules_fuzzing and rules_cc_autoconf
+# (packages //foreign_cc, //pkg, //perl, //fuzzing, //cc_autoconf) need no
+# extension usage here: each module registers its own toolchains (and, for
+# rules_fuzzing, its own Python toolchains + pip hub) from its MODULE.bazel.
+# --- end native ---

@@ -1,0 +1,7 @@
+# Source tree of a tiny CMake project. rules_foreign_cc consumes it through the
+# `all_srcs` filegroup (the conventional name used in the rules_foreign_cc docs).
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//foreign_cc:__pkg__"],
+)

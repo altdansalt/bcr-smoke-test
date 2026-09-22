@@ -1,0 +1,6 @@
+# Source tree of a tiny plain-Makefile project consumed by `make()`.
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//foreign_cc:__pkg__"],
+)

@@ -1,0 +1,25 @@
+/* config.h.in - template rendered by autoconf_hdr (from rules_cc_autoconf examples/simple, MIT). */
+
+/* Define to 1 if you have the `free' function. */
+#undef HAVE_FREE
+
+/* Define to 1 if you have the `malloc' function. */
+#undef HAVE_MALLOC
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the <this_header_does_not_exist.h> header file. */
+#undef HAVE_THIS_HEADER_DOES_NOT_EXIST_H
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION

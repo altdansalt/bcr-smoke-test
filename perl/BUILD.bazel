@@ -1,0 +1,31 @@
+# rules_perl smoke: perl_library + perl_binary + perl_test on the hermetic
+# (relocatable) perl toolchain, plus an sh_test that runs the binary.
+load("@rules_perl//perl:perl.bzl", "perl_binary", "perl_library", "perl_test")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+perl_library(
+    name = "greeter",
+    srcs = ["greeter.pm"],
+)
+
+perl_binary(
+    name = "hello",
+    srcs = ["hello.pl"],
+    deps = [":greeter"],
+)
+
+# Test::More based test that uses the library (pattern from rules_perl examples/fibonacci).
+perl_test(
+    name = "greeter_test",
+    size = "small",
+    srcs = ["greeter_test.t"],
+    deps = [":greeter"],
+)
+
+sh_test(
+    name = "hello_test",
+    size = "small",
+    srcs = ["hello_test.sh"],
+    args = ["$(rootpath :hello)"],
+    data = [":hello"],
+)

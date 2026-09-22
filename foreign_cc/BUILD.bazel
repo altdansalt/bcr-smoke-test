@@ -1,0 +1,63 @@
+# rules_foreign_cc smoke: build tiny in-repo CMake / configure+make / plain make
+# projects with the hermetic cmake, ninja and make toolchains, and consume the
+# resulting static libraries from cc_test.
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake", "configure_make", "make")
+
+# cmake(): default generator ("Unix Makefiles" -> hermetic GNU make).
+cmake(
+    name = "greet",
+    lib_source = "//foreign_cc/cmake_greet:all_srcs",
+    out_static_libs = ["libgreet.a"],
+)
+
+# cmake() again, this time with the Ninja generator (hermetic ninja).
+cmake(
+    name = "greet_ninja",
+    generate_args = ["-GNinja"],
+    lib_source = "//foreign_cc/cmake_greet:all_srcs",
+    out_static_libs = ["libgreet.a"],
+)
+
+cc_test(
+    name = "greet_test",
+    size = "small",
+    srcs = ["greet_test.c"],
+    deps = [":greet"],
+)
+
+cc_test(
+    name = "greet_ninja_test",
+    size = "small",
+    srcs = ["greet_test.c"],
+    deps = [":greet_ninja"],
+)
+
+# configure_make(): ./configure --prefix=... && make && make install.
+configure_make(
+    name = "add",
+    configure_in_place = True,
+    lib_source = "//foreign_cc/configure_add:all_srcs",
+    out_static_libs = ["libadd.a"],
+)
+
+cc_test(
+    name = "add_test",
+    size = "small",
+    srcs = ["add_test.c"],
+    deps = [":add"],
+)
+
+# make(): make && make install PREFIX=...
+make(
+    name = "mul",
+    lib_source = "//foreign_cc/make_mul:all_srcs",
+    out_static_libs = ["libmul.a"],
+)
+
+cc_test(
+    name = "mul_test",
+    size = "small",
+    srcs = ["mul_test.c"],
+    deps = [":mul"],
+)

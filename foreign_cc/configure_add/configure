@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Minimal stand-in for an autoconf-generated configure script. Pattern taken from
+# rules_foreign_cc examples/configure_modify_input_source/simple_lib/configure
+# (https://github.com/bazel-contrib/rules_foreign_cc, Apache-2.0).
+set -euo pipefail
+
+prefix=/usr/local
+for arg in "$@"; do
+  case "$arg" in
+    --prefix=*) prefix="${arg#--prefix=}" ;;
+    *) ;;  # ignore --host, --disable-*, ... that rules_foreign_cc may pass
+  esac
+done
+
+{
+  echo "CC = ${CC:-cc}"
+  echo "CFLAGS = ${CFLAGS:-}"
+  echo "prefix = ${prefix}"
+  cat Makefile.in
+} > Makefile
+echo "configure: wrote Makefile (prefix=${prefix})"

@@ -1,0 +1,31 @@
+# rules_fuzzing smoke: cc_fuzz_test with a committed seed corpus. With the
+# default engine (replay) `bazel test` runs the target once over the corpus,
+# so this is an ordinary hermetic test. Fuzz for real with e.g.
+#   bazel test --config=asan-libfuzzer //fuzzing:kv_parser_fuzz_test
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_fuzzing//fuzzing:cc_defs.bzl", "cc_fuzz_test")
+
+cc_library(
+    name = "kv_parser",
+    srcs = ["kv_parser.cc"],
+    hdrs = ["kv_parser.h"],
+)
+
+cc_test(
+    name = "kv_parser_test",
+    size = "small",
+    srcs = ["kv_parser_test.cc"],
+    deps = [
+        ":kv_parser",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_fuzz_test(
+    name = "kv_parser_fuzz_test",
+    size = "small",
+    srcs = ["kv_parser_fuzz_test.cc"],
+    corpus = glob(["corpus/*"]),
+    deps = [":kv_parser"],
+)

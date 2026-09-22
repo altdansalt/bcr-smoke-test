@@ -1,0 +1,101 @@
+# rules_pkg smoke: the mapping rules (pkg_files / pkg_filegroup / pkg_mklink),
+# the archive rules (pkg_tar / pkg_zip / pkg_deb) and rules_pkg's own
+# verify_archive_test, plus a plain sh_test that lists the tarball.
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files", "pkg_mklink", "strip_prefix")
+load("@rules_pkg//pkg:pkg.bzl", "pkg_deb", "pkg_tar", "pkg_zip")
+load("@rules_pkg//pkg:verify_archive.bzl", "verify_archive_test")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+# Executables end up under bin/ with mode 0755 (a compiled cc_binary and a script).
+pkg_files(
+    name = "bin_files",
+    srcs = [
+        "hello.sh",
+        "//cc:hello",
+    ],
+    attributes = pkg_attributes(mode = "0755"),
+    prefix = "bin",
+    strip_prefix = strip_prefix.from_pkg(),
+)
+
+pkg_files(
+    name = "doc_files",
+    srcs = ["NOTICE.txt"],
+    attributes = pkg_attributes(mode = "0644"),
+    prefix = "share/doc/smoke",
+)
+
+# A symlink inside the package: bin/hi -> hello
+pkg_mklink(
+    name = "hi_link",
+    link_name = "bin/hi",
+    target = "hello",
+)
+
+pkg_filegroup(
+    name = "install_tree",
+    srcs = [
+        ":bin_files",
+        ":doc_files",
+        ":hi_link",
+    ],
+    prefix = "usr",
+)
+
+pkg_tar(
+    name = "smoke_tar",
+    srcs = [":install_tree"],
+    extension = "tar.gz",
+    package_dir = "/opt/smoke",
+)
+
+pkg_zip(
+    name = "smoke_zip",
+    srcs = [":install_tree"],
+    package_dir = "opt/smoke",
+)
+
+pkg_deb(
+    name = "smoke_deb",
+    architecture = "amd64",
+    data = ":smoke_tar",
+    description = "bcr-smoke-test sample package",
+    homepage = "https://github.com/bazelbuild/bazel-central-registry",
+    maintainer = "nobody <nobody@example.com>",
+    package = "bcr-smoke",
+    version = "0.1.0",
+)
+
+# rules_pkg's own archive checker (a py_test on the hermetic rules_python toolchain).
+verify_archive_test(
+    name = "smoke_tar_contents_test",
+    size = "small",
+    must_contain = [
+        "opt/smoke/usr/bin/hello",
+        "opt/smoke/usr/bin/hello.sh",
+        "opt/smoke/usr/bin/hi",
+        "opt/smoke/usr/share/doc/smoke/NOTICE.txt",
+    ],
+    must_not_contain = ["opt/smoke/usr/bin/BUILD.bazel"],
+    target = ":smoke_tar",
+    verify_links = {"opt/smoke/usr/bin/hi": "hello"},
+)
+
+# Independent check with plain `tar tf` and a mode assertion.
+sh_test(
+    name = "smoke_tar_test",
+    size = "small",
+    srcs = ["smoke_tar_test.sh"],
+    args = ["$(rootpath :smoke_tar)"],
+    data = [":smoke_tar"],
+)
+
+build_test(
+    name = "archives_build_test",
+    size = "small",
+    targets = [
+        ":smoke_deb",
+        ":smoke_zip",
+    ],
+)
