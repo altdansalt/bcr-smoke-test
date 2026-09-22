@@ -85,9 +85,10 @@ Evidence:
 - A `--profile` confirms `prepareForExecution` (the eager wipe/plant) completes before any lazy
   planting, ruling out an earlier hypothesis of a delete/plant race.
 
-Fix: keep main-repo lazily planted links and external-repo links in separate sets (or simply
-always `createDirectoryAndParents()` for `external/`, which is idempotent). Branch with a failing
-test and the fix: see the link in the README.
+Fix: keep main-repo lazily planted links and external-repo links in separate sets. A branch with
+the fix, a unit test (`IncrementalPackageRootsTest`) and a shell integration test
+(`skymeld_symlink_forest_test.sh`), both of which fail before the change and pass after it, is at
+<https://github.com/altdansalt/bazel/tree/skymeld-external-dir-not-created-with-case-clash>. No pull request has been opened.
 
 ## Not the same as
 

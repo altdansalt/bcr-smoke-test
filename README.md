@@ -213,8 +213,8 @@ that nothing in the build depends on outputs being materialized locally.
 - **Bazel 9.x Skymeld**: a main repo with case-clashing top-level names (here `LICENSE` and
   `license/`) makes lazily planted `execroot/_main/external/*` symlinks fail with ENOENT, so
   `bazel test //...` fails on `external/...` paths.
-  `.bazelrc` disables Skymeld (`--noexperimental_merged_skyframe_analysis_execution`); details and
-  an upstream-ready report in `docs/bazel-skymeld-symlink-race.md`.
+  `.bazelrc` disables Skymeld (`--noexperimental_merged_skyframe_analysis_execution`); analysis in
+  `docs/bazel-skymeld-symlink-race.md`, fix + failing tests on a fork branch: <https://github.com/altdansalt/bazel/tree/skymeld-external-dir-not-created-with-case-clash>.
 - Aspect rulesets phone home by default; `.bazelrc` sets `--repo_env=DO_NOT_TRACK=1`.
 <!-- gotchas:end -->
 
