@@ -1,0 +1,250 @@
+# bazel_skylib + bazel_features smoke: the commonly used skylib rules, a small
+# .bzl using lib/{paths,dicts,selects}.bzl with bzl_library + unittest/analysistest,
+# and a rule that branches on @bazel_features.
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "string_flag")
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary", "native_test")
+load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
+load("@bazel_skylib//rules:select_file.bzl", "select_file")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load(":features.bzl", "features_file")
+load(":features_test.bzl", "features_test_suite")
+load(":greeting.bzl", "greeting_file", "greeting_for_os")
+load(":greeting_test.bzl", "greeting_test_suite")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["greeting.bzl"])  # documented by //stardoc
+
+# --- write_file / copy_file / expand_template / diff_test ---
+
+write_file(
+    name = "hello_txt",
+    out = "hello.txt",
+    content = [
+        "Hello, BCR!",
+        "",  # trailing newline
+    ],
+    newline = "unix",
+)
+
+copy_file(
+    name = "hello_copy",
+    src = ":hello_txt",
+    out = "hello_copy.txt",
+)
+
+diff_test(
+    name = "copy_file_test",
+    file1 = ":hello_copy",
+    file2 = "hello.golden.txt",
+)
+
+expand_template(
+    name = "hello_expanded",
+    out = "hello_expanded.txt",
+    substitutions = {"{NAME}": "BCR"},
+    template = "greeting.txt.tpl",
+)
+
+diff_test(
+    name = "expand_template_test",
+    file1 = ":hello_expanded",
+    file2 = "hello.golden.txt",
+)
+
+# --- native_binary / run_binary / native_test ---
+
+write_file(
+    name = "upper_sh",
+    out = "upper.sh",
+    content = [
+        "#!/bin/bash",
+        "tr '[:lower:]' '[:upper:]' < \"$1\" > \"$2\"",
+    ],
+    is_executable = True,
+)
+
+native_binary(
+    name = "upper",
+    src = ":upper_sh",
+)
+
+run_binary(
+    name = "hello_upper",
+    srcs = [":hello_txt"],
+    outs = ["hello_upper.txt"],
+    args = [
+        "$(execpath :hello_txt)",
+        "$(execpath hello_upper.txt)",
+    ],
+    tool = ":upper",
+)
+
+diff_test(
+    name = "run_binary_test",
+    file1 = ":hello_upper",
+    file2 = "hello_upper.golden.txt",
+)
+
+# Wrap the C++ binary from //cc as a test: it prints "Hello, BCR!" and exits 0.
+native_test(
+    name = "hello_native_test",
+    size = "small",
+    src = "//cc:hello",
+)
+
+# --- select_file ---
+
+filegroup(
+    name = "texts",
+    srcs = [
+        ":hello_txt",
+        ":hello_upper",
+    ],
+)
+
+select_file(
+    name = "picked_upper",
+    srcs = ":texts",
+    subpath = "hello_upper.txt",
+)
+
+diff_test(
+    name = "select_file_test",
+    file1 = ":picked_upper",
+    file2 = "hello_upper.golden.txt",
+)
+
+# --- common_settings: bool_flag / string_flag + config_setting + selects.config_setting_group ---
+
+bool_flag(
+    name = "shout",
+    build_setting_default = False,
+)
+
+string_flag(
+    name = "lang",
+    build_setting_default = "en",
+    values = [
+        "en",
+        "fr",
+    ],
+)
+
+config_setting(
+    name = "shout_on",
+    flag_values = {":shout": "True"},
+)
+
+config_setting(
+    name = "lang_fr",
+    flag_values = {":lang": "fr"},
+)
+
+selects.config_setting_group(
+    name = "fr_or_shout",
+    match_any = [
+        ":lang_fr",
+        ":shout_on",
+    ],
+)
+
+write_file(
+    name = "flags_txt",
+    out = "flags.txt",
+    content = select({
+        ":fr_or_shout": [
+            "BONJOUR",
+            "",
+        ],
+        "//conditions:default": [
+            "Hello, BCR!",
+            "",
+        ],
+    }),
+)
+
+# With default flag values the select() picks the default branch.
+diff_test(
+    name = "flags_default_test",
+    file1 = ":flags_txt",
+    file2 = "hello.golden.txt",
+)
+
+# --- custom rule/macro on lib/paths, dicts, selects + bzl_library + unittest/analysistest ---
+
+bzl_library(
+    name = "greeting_bzl",
+    srcs = ["greeting.bzl"],
+    deps = [
+        "@bazel_skylib//lib:dicts",
+        "@bazel_skylib//lib:paths",
+        "@bazel_skylib//lib:selects",
+    ],
+)
+
+bzl_library(
+    name = "greeting_test_bzl",
+    srcs = ["greeting_test.bzl"],
+    deps = [
+        ":greeting_bzl",
+        "@bazel_skylib//lib:paths",
+        "@bazel_skylib//lib:unittest",
+    ],
+)
+
+greeting_file(
+    name = "greeting_bcr",
+    who = "BCR",
+)
+
+greeting_for_os(name = "greeting_os")
+
+diff_test(
+    name = "greeting_file_test",
+    file1 = ":greeting_bcr",
+    file2 = "hello.golden.txt",
+)
+
+greeting_test_suite(name = "greeting_tests")
+
+# --- bazel_features ---
+
+bzl_library(
+    name = "features_bzl",
+    srcs = ["features.bzl"],
+    deps = ["@bazel_features//:features"],
+)
+
+bzl_library(
+    name = "features_test_bzl",
+    srcs = ["features_test.bzl"],
+    deps = [
+        ":features_bzl",
+        "@bazel_features//:features",
+        "@bazel_skylib//lib:unittest",
+    ],
+)
+
+features_file(name = "features")
+
+features_test_suite(name = "features_tests")
+
+build_test(
+    name = "build_test",
+    targets = [
+        ":features",
+        ":features_bzl",
+        ":features_test_bzl",
+        ":greeting_bzl",
+        ":greeting_test_bzl",
+        ":greeting_os",
+        ":upper",
+    ],
+)

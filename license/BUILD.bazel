@@ -1,0 +1,94 @@
+# rules_license + package_metadata smoke: license(), package_info(), the Bazel 9
+# package(default_package_metadata = ...) attribute, package_metadata's
+# package_metadata()/license() rules, and a gather_licenses_info-based report.
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@package_metadata//licenses/rules:license.bzl", pm_license = "license")
+load("@package_metadata//rules:package_metadata.bzl", "package_metadata")
+load("@rules_license//rules:license.bzl", "license")
+load("@rules_license//rules:package_info.bzl", "package_info")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load(":licenses_used.bzl", "licenses_used")
+
+package(
+    default_package_metadata = [
+        ":license",
+        ":package_info",
+        ":package_metadata",
+    ],
+    default_visibility = ["//visibility:public"],
+)
+
+# --- rules_license ---
+
+license(
+    name = "license",
+    package_name = "bcr_smoke_test",
+    copyright_notice = "Copyright 2026 bcr-smoke-test authors",
+    license_kinds = ["@rules_license//licenses/spdx:Apache-2.0"],
+    license_text = "LICENSE.txt",
+)
+
+package_info(
+    name = "package_info",
+    package_name = "bcr_smoke_test",
+    package_url = "https://github.com/bazelbuild/bazel-central-registry",
+    package_version = "0.1.0",
+)
+
+# --- package_metadata ---
+
+pm_license(
+    name = "pm_license",
+    kind = "@package_metadata//licenses/spdx:Apache-2.0",
+    text = "LICENSE.txt",
+)
+
+package_metadata(
+    name = "package_metadata",
+    attributes = [":pm_license"],
+    purl = "pkg:bazel/bcr_smoke_test@0.1.0",
+)
+
+# A plain target that picks up the package defaults (its metadata is what the
+# report below collects).
+filegroup(
+    name = "licensed_files",
+    srcs = ["LICENSE.txt"],
+)
+
+build_test(
+    name = "license_build_test",
+    targets = [
+        ":license",
+        ":licensed_files",
+        ":package_info",
+        ":package_metadata",
+        ":pm_license",
+    ],
+)
+
+# --- gather_licenses_info aspect report ---
+
+bzl_library(
+    name = "licenses_used_bzl",
+    srcs = ["licenses_used.bzl"],
+    deps = ["@rules_license//rules:standard_package"],
+)
+
+licenses_used(
+    name = "licenses_used",
+    out = "licenses_used.json",
+    # NOTE: rules_license 1.0.0's write_licenses_info() fails at analysis time
+    # ("TransitiveLicensesInfo has no field target_under_license") for deps that
+    # carry no license metadata at all, so only list targets from this package.
+    deps = [":licensed_files"],
+)
+
+sh_test(
+    name = "licenses_used_test",
+    size = "small",
+    srcs = ["licenses_used_test.sh"],
+    args = ["$(rootpath :licenses_used)"],
+    data = [":licenses_used"],
+)

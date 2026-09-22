@@ -1,0 +1,146 @@
+# platforms smoke: our own constraint_setting/constraint_value, a platform()
+# that inherits the host platform, config_settings on @platforms//os and //cpu
+# consumed by select(), and a macOS-only target/test that must be *skipped*
+# (not fail) by `bazel build //...` / `bazel test //...` on Linux.
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+
+package(default_visibility = ["//visibility:public"])
+
+# --- our own constraint ---
+
+constraint_setting(
+    name = "smoke_tier",
+    default_constraint_value = ":tier_default",
+)
+
+constraint_value(
+    name = "tier_default",
+    constraint_setting = ":smoke_tier",
+)
+
+constraint_value(
+    name = "tier_rbe",
+    constraint_setting = ":smoke_tier",
+)
+
+# Host platform plus our constraint (usable as --platforms=//platforms:host_rbe).
+platform(
+    name = "host_rbe",
+    constraint_values = [":tier_rbe"],
+    parents = ["@platforms//host"],
+)
+
+config_setting(
+    name = "is_rbe_tier",
+    constraint_values = [":tier_rbe"],
+)
+
+# --- config_settings on @platforms os/cpu ---
+
+config_setting(
+    name = "linux_x86_64",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+
+config_setting(
+    name = "linux_aarch64",
+    constraint_values = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:linux",
+    ],
+)
+
+config_setting(
+    name = "macos_x86_64",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:macos",
+    ],
+)
+
+config_setting(
+    name = "macos_arm64",
+    constraint_values = [
+        "@platforms//cpu:arm64",
+        "@platforms//os:macos",
+    ],
+)
+
+# Two independent select()s that must agree: one over combined os+cpu settings,
+# one over the plain @platforms values; diff_test compares the results.
+write_file(
+    name = "platform_txt",
+    out = "platform.txt",
+    content = select({
+        ":linux_aarch64": [
+            "os=linux",
+            "cpu=aarch64",
+        ],
+        ":linux_x86_64": [
+            "os=linux",
+            "cpu=x86_64",
+        ],
+        ":macos_arm64": [
+            "os=macos",
+            "cpu=aarch64",
+        ],
+        ":macos_x86_64": [
+            "os=macos",
+            "cpu=x86_64",
+        ],
+        "//conditions:default": ["os=other"],
+    }) + select({
+        ":is_rbe_tier": ["tier=rbe"],
+        "//conditions:default": ["tier=default"],
+    }),
+)
+
+write_file(
+    name = "expected_platform_txt",
+    out = "expected_platform.txt",
+    content = select({
+        "@platforms//os:linux": ["os=linux"],
+        "@platforms//os:macos": ["os=macos"],
+        "//conditions:default": ["os=other"],
+    }) + select({
+        "@platforms//cpu:aarch64": ["cpu=aarch64"],
+        "@platforms//cpu:x86_64": ["cpu=x86_64"],
+        "//conditions:default": [],
+    }) + ["tier=default"],
+)
+
+diff_test(
+    name = "platform_select_test",
+    file1 = ":platform_txt",
+    file2 = ":expected_platform_txt",
+)
+
+build_test(
+    name = "platform_build_test",
+    targets = [
+        ":host_rbe",
+        ":tier_rbe",
+        "@platforms//host",
+    ],
+)
+
+# --- incompatible targets: skipped on Linux, built/tested on macOS ---
+
+write_file(
+    name = "macos_only_txt",
+    out = "macos_only.txt",
+    content = ["macos"],
+    target_compatible_with = ["@platforms//os:macos"],
+)
+
+diff_test(
+    name = "macos_only_test",
+    file1 = ":macos_only_txt",
+    file2 = ":macos_only_txt",
+    target_compatible_with = ["@platforms//os:macos"],
+)

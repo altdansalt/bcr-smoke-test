@@ -1,0 +1,21 @@
+# stardoc smoke: generate Markdown API docs for //skylib:greeting.bzl (rule,
+# provider, macro, functions) and diff them against a committed golden file.
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@stardoc//stardoc:stardoc.bzl", "stardoc")
+
+exports_files(["BUILD.bazel"])  # linted by //buildifier:buildifier_test
+
+stardoc(
+    name = "greeting_docs",
+    out = "greeting_docs.md",
+    input = "//skylib:greeting.bzl",
+    deps = ["//skylib:greeting_bzl"],
+)
+
+# Regenerate the golden with:
+#   bazel build //stardoc:greeting_docs && cp bazel-bin/stardoc/greeting_docs.md stardoc/greeting_docs.golden.md
+diff_test(
+    name = "greeting_docs_test",
+    file1 = ":greeting_docs",
+    file2 = "greeting_docs.golden.md",
+)

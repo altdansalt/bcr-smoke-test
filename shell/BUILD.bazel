@@ -1,0 +1,35 @@
+# rules_shell smoke: sh_library, sh_binary, sh_test. The test runs a data-dep
+# binary via $(rootpath) and a C++ binary from //cc via runfiles rlocation --
+# the canonical runfiles pattern that must work under remote execution.
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+load("@rules_shell//shell:sh_library.bzl", "sh_library")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+package(default_visibility = ["//visibility:public"])
+
+sh_library(
+    name = "lib",
+    srcs = ["lib.sh"],
+)
+
+sh_binary(
+    name = "greet",
+    srcs = ["greet.sh"],
+    data = [":lib"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
+)
+
+sh_test(
+    name = "greet_test",
+    size = "small",
+    srcs = ["greet_test.sh"],
+    args = [
+        "$(rootpath :greet)",
+        "$(rlocationpath //cc:hello)",
+    ],
+    data = [
+        ":greet",
+        "//cc:hello",
+    ],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
+)
