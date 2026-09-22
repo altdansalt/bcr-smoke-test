@@ -7,7 +7,7 @@ toolchains in the [Bazel Central Registry](https://registry.bazel.build/)**.
 ```sh
 git clone https://github.com/altdansalt/bcr-smoke-test
 cd bcr-smoke-test
-bazel build //...               # fast tier: every ruleset, ~2 min cold on 8 cores
+bazel build //...               # fast tier: every ruleset, ~2 min cold on 8 cores incl. downloads
 bazel test //...
 bazel test //... --config=full  # everything, incl. gRPC C++, OpenSSL, crate_universe, Kotlin, ... (~16 min cold)
 ```
@@ -39,7 +39,7 @@ Measured cold on this repo's development VM (8 cores, fresh caches, including al
 
 | | fetch | build | test | total |
 |---|---|---|---|---|
-| default tier | 42 s | ~2 min | seconds | ~3 min |
+| default tier | 39 s | 86 s | 2 s | 127 s (~2 min) |
 | `--config=full` | 81 s | 14.4 min | 4 s | ~16 min |
 
 Point it at your service the usual way, for example:

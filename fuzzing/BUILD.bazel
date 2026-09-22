@@ -24,10 +24,10 @@ cc_test(
 
 cc_fuzz_test(
     name = "kv_parser_fuzz_test",
-    tags = ["heavy"],
     size = "small",
     srcs = ["kv_parser_fuzz_test.cc"],
     corpus = glob(["corpus/*"]),
+    tags = ["heavy"],
     deps = [":kv_parser"],
 )
 

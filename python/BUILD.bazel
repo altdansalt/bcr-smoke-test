@@ -66,9 +66,9 @@ py_proto_library(
 
 py_test(
     name = "person_test",
-    tags = ["heavy"],
     size = "small",
     srcs = ["person_test.py"],
+    tags = ["heavy"],
     deps = [":person_py_proto"],
 )
 
