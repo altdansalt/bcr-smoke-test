@@ -7,8 +7,9 @@ toolchains in the [Bazel Central Registry](https://registry.bazel.build/)**.
 ```sh
 git clone https://github.com/altdansalt/bcr-smoke-test
 cd bcr-smoke-test
-bazel build //...
+bazel build //...               # fast tier: every ruleset, ~2 min cold on 8 cores
 bazel test //...
+bazel test //... --config=full  # everything, incl. gRPC C++, OpenSSL, crate_universe, Kotlin, ... (~16 min cold)
 ```
 
 If both commands succeed against your remote cache / RBE service, that service very
@@ -16,6 +17,30 @@ probably works with most of the Bazel rules in the wild: C/C++, Java/Kotlin, Pyt
 Rust, JavaScript/TypeScript, protobuf/gRPC, shell, packaging, foreign (CMake/autotools)
 builds, and the common Starlark tooling. Every package contains real code that is
 compiled and executed, not just `build_test`s.
+
+## Two tiers
+
+Targets tagged `heavy` are skipped by default (`.bazelrc` sets `--build_tag_filters=-heavy`
+and `--test_tag_filters=-heavy`); `--config=full` clears the filters. The default tier still
+exercises every ruleset and toolchain; what it leaves out is the *expensive library builds*:
+
+| skipped by default | why |
+|---|---|
+| gRPC C++ (`proto/grpc`, `proto/googleapis`), `cc_proto_library` (`proto/`) | libgrpc++ and libprotobuf/libprotoc are ~10 min of the cold build |
+| `py_proto_library` (`python/`), `cc_fuzz_test` (`fuzzing/`) | each pulls libprotobuf and abseil in through code-generation plugins |
+| grpc-java (`jvm/`) | its protoc plugin links libprotoc |
+| rules_kotlin (`jvm/kotlin`) | compiles the rules_kotlin builder |
+| crate_universe (`rust/`; a dependency-free crate stays in the fast tier) | compiles the `cargo-bazel` generator |
+| `configure_make` / `make` / CMake with Unix Makefiles (`foreign_cc/`; the Ninja variant stays) | GNU make is built from source |
+| OpenSSL, BoringSSL, curl, mbedtls, c-ares, freetype, abseil, re2 (`cc/libs`) | minutes each |
+| gawk, m4 (`contrib/gnu`) | built from source via rules_cc_autoconf |
+
+Measured cold on this repo's development VM (8 cores, fresh caches, including all downloads):
+
+| | fetch | build | test | total |
+|---|---|---|---|---|
+| default tier | 42 s | ~2 min | seconds | ~3 min |
+| `--config=full` | 81 s | 14.4 min | 4 s | ~16 min |
 
 Point it at your service the usual way, for example:
 

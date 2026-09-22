@@ -10,17 +10,18 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
+        tier: [default, full]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: bazel-contrib/setup-bazel@0.15.0
         with:
           bazelisk-cache: true
-          disk-cache: ${{ github.workflow }}
+          disk-cache: ${{ github.workflow }}-${{ matrix.tier }}
           repository-cache: true
       - name: bazel build //...
-        run: bazel build //...
+        run: bazel build //... ${{ matrix.tier == 'full' && '--config=full' || '' }}
       - name: bazel test //...
-        run: bazel test //...
+        run: bazel test //... ${{ matrix.tier == 'full' && '--config=full' || '' }}
       - name: lockfiles unchanged
         run: git diff --exit-code
